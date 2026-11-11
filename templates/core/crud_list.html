@@ -61,6 +61,7 @@
             <td class="{% if forloop.first %}fw-semibold{% endif %}">{% if forloop.first %}<a href="{{ fila.url_detalle }}">{% include "core/_celda.html" %}</a>{% else %}{% include "core/_celda.html" %}{% endif %}</td>
           {% endfor %}
           <td class="text-end text-nowrap">
+            {% for a in fila.acciones %}<a href="{{ a.url }}" class="btn btn-sm btn-{{ a.color }}" title="{{ a.titulo }}"><i class="bi {{ a.icono }}"></i> {{ a.texto }}</a> {% endfor %}
             <a href="{{ fila.url_detalle }}" class="btn btn-sm btn-outline-secondary" title="Ver"><i class="bi bi-eye"></i></a>
             {% if puede_editar %}<a href="{% url 'crud_editar' m.slug fila.obj.pk %}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>{% endif %}
             {% if puede_eliminar and not fila.obj.es_sistema %}<a href="{% url 'crud_eliminar' m.slug fila.obj.pk %}" class="btn btn-sm btn-outline-danger" title="Eliminar"><i class="bi bi-trash"></i></a>{% endif %}

@@ -44,6 +44,7 @@ class Mantenedor:
     antes_de_guardar: Optional[Callable] = None        # fn(obj, request, creando)
     queryset: Optional[Callable] = None                # fn(request) -> QuerySet
     ayuda: str = ""
+    acciones: Optional[Callable] = None                # fn(obj, user) -> [botones extra por fila]
 
     def __post_init__(self):
         opts = self.model._meta

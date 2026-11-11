@@ -122,7 +122,8 @@ class CrudListView(MantenedorMixin, View):
 
         pagina = Paginator(qs, 15).get_page(request.GET.get("page"))
         filas = [
-            {"obj": o, "celdas": [celda(o, c, m) for c in m.columnas], "url_detalle": url_detalle(m, o)}
+            {"obj": o, "celdas": [celda(o, c, m) for c in m.columnas], "url_detalle": url_detalle(m, o),
+             "acciones": m.acciones(o, request.user) if m.acciones else []}
             for o in pagina
         ]
         columnas = [
