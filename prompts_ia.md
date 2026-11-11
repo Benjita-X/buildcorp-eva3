@@ -37,7 +37,7 @@ FK con `on_delete=PROTECT`.
 morosidad y bloqueo automático.
 
 **Apoyo recibido:** capa `services.py` con transacciones atómicas; firma con `<canvas>` → PNG base64; sobrescritura de
-`Activo.save()` para registrar `MovimientoActivo`; comando `revisar_alertas`; cálculo de cobro (tarifa diaria × días).
+`Activo.save()` para registrar `MovimientoActivo`; cálculo de cobro (tarifa diaria × días).
 
 ## Prompt 5 – Frontend responsivo y consumo asíncrono de la API
 **Consulta:** estructura HTML/CSS con Bootstrap 5 y JS para selects encadenados Región/Ciudad/Comuna, filtro de
@@ -54,8 +54,8 @@ responsables por contratista y refresco del dashboard.
 ## Prompt 7 – Pruebas y despliegue en AWS EC2
 **Consulta:** pruebas automáticas de las reglas y script de despliegue en EC2 con PostgreSQL.
 
-**Apoyo recibido:** `core/tests.py` (20 pruebas), `deploy/setup_ec2.sh`, unidades systemd para Gunicorn y el timer de
-alertas, configuración de Nginx, `.env.example`.
+**Apoyo recibido:** `core/tests.py` (20 pruebas), archivo del servicio systemd de Gunicorn y configuración de Nginx según la
+receta del curso, `.env.example`.
 
 ## Prompt 8 – Usuarios aparte y despliegue final (10-11-2026)
 **Consulta:** *"tiene que quedar listo, con todo lo de la rúbrica, fiel a lo que me tocó, separar por usuario, todo en templates,

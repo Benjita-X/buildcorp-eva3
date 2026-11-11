@@ -1,18 +1,12 @@
 [Unit]
-Description=BuildCorp - Gunicorn (Django)
-After=network.target postgresql.service
-Requires=postgresql.service
+Description=Gunicorn para BuildCorp
+After=network.target
 
 [Service]
 User=ubuntu
 Group=www-data
-WorkingDirectory=__APP_DIR__
-EnvironmentFile=__APP_DIR__/.env
-# Socket unix: rw para ubuntu y para el grupo www-data (Nginx), nada para el resto
-UMask=0007
-ExecStart=__APP_DIR__/venv/bin/gunicorn --workers 3 --umask 007 --bind unix:__SOCK__ --access-logfile - config.wsgi:application
-Restart=always
-RestartSec=3
+WorkingDirectory=/home/ubuntu/apps/buildcorp
+ExecStart=/home/ubuntu/apps/buildcorp/venv/bin/gunicorn --workers 3 --bind unix:/home/ubuntu/apps/buildcorp.sock config.wsgi:application
 
 [Install]
 WantedBy=multi-user.target

@@ -1,3 +1,0 @@
-# Los scripts de despliegue se ejecutan en Linux: forzar saltos de línea LF
-*.sh text eol=lf
-deploy/* text eol=lf

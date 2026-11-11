@@ -9,8 +9,7 @@ Reglas automáticas de alertas:
   3. Desbloqueo automático: si el bloqueo fue automático y ya no tiene morosos.
   4. Préstamos por vencer y mantenciones vencidas / por vencer.
 
-Se ejecuta con `python manage.py revisar_alertas` (cron/systemd timer en EC2)
-y también al abrir el dashboard o el listado de alertas.
+Se ejecuta al abrir el dashboard o el listado de alertas.
 """
 from datetime import timedelta
 

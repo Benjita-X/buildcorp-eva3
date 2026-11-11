@@ -50,7 +50,6 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -118,11 +117,7 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
-STATIC_ROOT = BASE_DIR / "staticfiles"
-STORAGES = {
-    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"},
-}
+STATIC_ROOT = BASE_DIR / "staticfiles"  # collectstatic los junta aquí y Nginx los sirve en /static/
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -140,16 +135,6 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = False  # el JS de la firma/fetch lee el token desde el formulario
 
-USE_HTTPS = env_bool("USE_HTTPS", False)
-SESSION_COOKIE_SECURE = USE_HTTPS
-CSRF_COOKIE_SECURE = USE_HTTPS
-SECURE_CONTENT_TYPE_NOSNIFF = True
-X_FRAME_OPTIONS = "DENY"
-if USE_HTTPS:
-    # Solo si se configura un certificado (la IP pública de AWS Academy funciona por HTTP)
-    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-    SECURE_SSL_REDIRECT = True
-    SECURE_HSTS_SECONDS = 3600
 
 # ---------------------------------------------------------------------------
 # Django REST Framework

@@ -18,7 +18,7 @@ no sabe dónde está cada activo ni cuándo mantenerlo. Este sistema centraliza:
 | **Catálogo de activos con trazabilidad de estado** (Disponible, En Uso, Mantenimiento, Dado de Baja) | Modelo `Activo` + tabla `EstadoActivo` (parametrizada). Cada cambio de estado o bodega queda en `MovimientoActivo` automáticamente → **hoja de vida** del activo. Traslados entre bodegas de obra y baja con motivo. |
 | **Entrega y devolución con firma digital del responsable de obra** | Flujo `/prestamos/nuevo/` y `/prestamos/<id>/devolver/` con firma dibujada en `<canvas>` (PNG base64), validada también en el servidor. Comprobante imprimible con ambas firmas. |
 | **Mantenimiento preventivo por uso o fechas límite** | `PlanMantenimiento` (cada N horas y/o cada N días). Las horas de uso informadas en cada devolución se suman al horómetro del activo. Al vencer un plan se genera la **OT automáticamente**; una devolución con daño genera una **OT correctiva**. |
-| **Alertas por morosidad y bloqueo automático de contratistas morosos** | Servicio `alertas/services.py`: préstamo vencido → estado *Atrasado* + alerta; si el contratista llega al máximo de préstamos morosos (parámetro) se **bloquea automáticamente** y no puede retirar más herramientas. Se desbloquea solo al regularizar. Se ejecuta cada hora (systemd timer) y al abrir el dashboard. |
+| **Alertas por morosidad y bloqueo automático de contratistas morosos** | Servicio `alertas/services.py`: préstamo vencido → estado *Atrasado* + alerta; si el contratista llega al máximo de préstamos morosos (parámetro) se **bloquea automáticamente** y no puede retirar más herramientas. Se desbloquea solo al regularizar. La revisión se ejecuta al abrir el dashboard o las alertas. |
 | Cobros exactos | Tarifa diaria congelada al momento del préstamo × días facturables (incluye los días de atraso). |
 
 ## 2. Todo parametrizado
@@ -57,8 +57,7 @@ Con eso se generan las pantallas `/m/comunas/`, `/m/comunas/nuevo/`, `/m/comunas
   *Mantenimiento* + OT) → revisión periódica de morosidad → bloqueo/desbloqueo automático.
 - **Vista de desarrollo:** reglas de negocio en `services.py` de cada app (las vistas solo orquestan), templates
   Bootstrap 5, API DRF con `ModelViewSet` por tabla, pruebas en `core/tests.py`.
-- **Vista física:** una instancia **EC2** con Nginx (:80) → Gunicorn (127.0.0.1:8000) → Django → **PostgreSQL** local;
-  systemd timer para la revisión de alertas.
+- **Vista física:** una instancia **EC2** con Nginx (:80) → socket unix → Gunicorn → Django → **PostgreSQL** local.
 - **Escenarios:** registrar entrega con firma, devolver con daño, contratista moroso bloqueado, mantención por horas.
 
 ## 4. Seguridad, sesiones y roles
@@ -97,37 +96,60 @@ python manage.py runserver
 Para una prueba rápida sin PostgreSQL se puede poner `DB_ENGINE=sqlite` en el `.env` (solo desarrollo).
 Pruebas automáticas: `python manage.py test` (pruebas de reglas de negocio, permisos, usuarios y mantenedores).
 
-## 6. Despliegue en AWS EC2 (AWS Academy)
+## 6. Despliegue en AWS EC2 (siguiendo la receta del curso)
 
-1. Lanzar una instancia **Ubuntu Server 22.04** (t3.micro), par de claves `claves.pem`, VPC por defecto con IP pública.
-   *Security Group*: **SSH 22** desde mi IP, **HTTP 80** para todos, **ICMP** (ping). Asociar una **IP elástica**.
-2. Conectarse por SSH desde Windows (proteger la clave con `icacls`):
-   ```powershell
-   icacls C:\AWS_KEYS\claves.pem /inheritance:r /grant:r "$($env:USERNAME):(R)"
-   ssh -i C:\AWS_KEYS\claves.pem ubuntu@IP_ELASTICA
-   ```
-3. En la instancia:
-   ```bash
-   mkdir -p ~/apps && cd ~/apps
-   git clone https://github.com/Benjita-X/buildcorp-eva3.git buildcorp && cd buildcorp
-   bash deploy/setup_ec2.sh
-   ```
-4. El script sigue las etapas de la receta: `apt update/upgrade`, instala `python3-pip python3-venv nginx git postgresql`,
-   crea la base de datos y el `.env` (SECRET_KEY aleatoria, `DEBUG=False`), migra, hace `collectstatic`, crea Gunicorn
-   como servicio systemd con **socket unix `/home/ubuntu/apps/buildcorp.sock`** (3 workers), configura **Nginx** como
-   proxy inverso con `location /static/` y logs en `/var/log/nginx/buildcorp_*.log`, y ajusta los permisos para que
-   `www-data` llegue al socket (`usermod`, `chown ubuntu:www-data`, `chmod 750/660`).
-5. Crear un superusuario propio si se desea: `./venv/bin/python manage.py createsuperuser`.
+**ETAPA 1 – Instancia:** Ubuntu Server 22.04, t3.micro, par de claves, VPC por defecto con IP pública.
+*Security Group:* SSH 22 desde mi IP, HTTP 80 para todos, HTTPS 443, ICMP (ping). **IP elástica** asociada.
 
-Comandos útiles en el servidor:
-```bash
-sudo systemctl status buildcorp          # estado de la app
-sudo journalctl -u buildcorp -f          # logs
-sudo systemctl list-timers | grep buildcorp
-./venv/bin/python manage.py revisar_alertas
+**ETAPA 2 – Conexión SSH desde Windows** (proteger la clave con `icacls`):
+```powershell
+icacls C:\AWS_KEYS\claves-buildcorp.pem /inheritance:r /grant:r "$($env:USERNAME):(R)"
+ssh -i C:\AWS_KEYS\claves-buildcorp.pem ubuntu@16.59.68.35
 ```
-> Si la IP pública cambia al reiniciar el laboratorio, actualizar `DJANGO_ALLOWED_HOSTS` y `DJANGO_CSRF_TRUSTED_ORIGINS`
-> en `.env` y ejecutar `sudo systemctl restart buildcorp`.
+
+**ETAPA 3 – Paquetes:**
+```bash
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y python3-pip python3-venv nginx git postgresql postgresql-contrib
+```
+
+**ETAPA 4 – Proyecto, base de datos PostgreSQL y prueba:**
+```bash
+sudo -u postgres psql -c "CREATE USER buildcorp WITH PASSWORD '...';"
+sudo -u postgres createdb -O buildcorp buildcorp
+mkdir -p ~/apps && cd ~/apps
+git clone https://github.com/Benjita-X/buildcorp-eva3.git buildcorp && cd buildcorp
+python3 -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env && nano .env      # SECRET_KEY, DEBUG=False, IP, datos de PostgreSQL
+python manage.py migrate
+python manage.py collectstatic
+python manage.py cargar_datos_iniciales --demo
+```
+
+**ETAPA 5 – Gunicorn como servicio systemd** (3 workers, socket unix `/home/ubuntu/apps/buildcorp.sock`):
+el contenido está en [`deploy/buildcorp.service`](deploy/buildcorp.service) → copiar a `/etc/systemd/system/buildcorp.service`.
+
+**ETAPA 6 – Nginx como proxy inverso** (con `location /static/` y logs):
+el contenido está en [`deploy/nginx_buildcorp.conf`](deploy/nginx_buildcorp.conf) → copiar a `/etc/nginx/sites-available/buildcorp`,
+enlazar en `sites-enabled` y borrar `/etc/nginx/sites-enabled/default`.
+
+**Permisos** (para que `www-data`, el usuario de Nginx, llegue al socket):
+```bash
+sudo usermod -aG www-data ubuntu
+sudo chown ubuntu:www-data /home/ubuntu /home/ubuntu/apps /home/ubuntu/apps/buildcorp
+chmod 750 /home/ubuntu /home/ubuntu/apps /home/ubuntu/apps/buildcorp
+```
+
+**ETAPA 8 – Recargar y probar:**
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now buildcorp
+sudo nginx -t && sudo systemctl restart nginx
+```
+Probar http://16.59.68.35/ , http://16.59.68.35/api/ y http://16.59.68.35/admin/
+
+Comandos útiles: `sudo systemctl status buildcorp nginx` · `sudo journalctl -u buildcorp -n 50` · `sudo tail /var/log/nginx/buildcorp_error.log`
 
 ## 7. Endpoints principales
 
