@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Alertas{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+  <h1 class="h4 mb-0"><i class="bi bi-bell"></i> Alertas</h1>
+  {% if perms.alertas.change_alerta %}
+  <form method="post" action="{% url 'alertas:revisar' %}" class="ms-auto">{% csrf_token %}
+    <button class="btn btn-outline-bc"><i class="bi bi-arrow-repeat"></i> Ejecutar revisión ahora</button>
+  </form>
+  {% endif %}
+</div>
+<div class="d-flex flex-wrap gap-2 mb-3">
+  <div class="btn-group btn-group-sm">
+    <a href="?ver=pendientes&tipo={{ tipo }}" class="btn btn-outline-secondary {% if ver != 'resueltas' %}active{% endif %}">Pendientes</a>
+    <a href="?ver=resueltas&tipo={{ tipo }}" class="btn btn-outline-secondary {% if ver == 'resueltas' %}active{% endif %}">Resueltas</a>
+  </div>
+  <div class="btn-group btn-group-sm flex-wrap">
+    <a href="?ver={{ ver }}" class="btn btn-outline-secondary {% if not tipo %}active{% endif %}">Todas</a>
+    {% for t in tipos %}<a href="?ver={{ ver }}&tipo={{ t.codigo }}" class="btn btn-outline-{{ t.color }} {% if tipo == t.codigo %}active{% endif %}">{{ t.nombre }}</a>{% endfor %}
+  </div>
+</div>
+<div class="card shadow-sm">
+  <ul class="list-group list-group-flush">
+    {% for a in pagina %}
+    <li class="list-group-item d-flex flex-wrap gap-2 align-items-center">
+      <span class="badge text-bg-{{ a.tipo.color }}">{{ a.tipo.nombre }}</span>
+      <div class="flex-grow-1">
+        <div>{{ a.mensaje }}</div>
+        <div class="small text-muted">{{ a.fecha|date:"d-m-Y H:i" }}
+          {% if a.prestamo %} · <a href="{{ a.prestamo.get_absolute_url }}">{{ a.prestamo.folio }}</a>{% endif %}
+          {% if a.contratista %} · <a href="{{ a.contratista.get_absolute_url }}">{{ a.contratista.razon_social }}</a>{% endif %}
+          {% if a.activo %} · <a href="{{ a.activo.get_absolute_url }}">{{ a.activo.codigo }}</a>{% endif %}
+          {% if a.resuelta %} · resuelta {{ a.fecha_resolucion|date:"d-m-Y H:i" }} por {{ a.resuelta_por|default:"sistema" }}{% endif %}
+        </div>
+      </div>
+      {% if not a.resuelta and perms.alertas.change_alerta %}
+      <form method="post" action="{% url 'alertas:resolver' a.pk %}">{% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <button class="btn btn-sm btn-outline-success"><i class="bi bi-check2"></i> Resolver</button>
+      </form>
+      {% endif %}
+    </li>
+    {% empty %}
+    <li class="list-group-item text-center text-muted py-4">No hay alertas.</li>
+    {% endfor %}
+  </ul>
+</div>
+{% if pagina.has_other_pages %}
+<nav class="mt-2"><ul class="pagination pagination-sm justify-content-center">
+  {% if pagina.has_previous %}<li class="page-item"><a class="page-link" href="?ver={{ ver }}&tipo={{ tipo }}&page={{ pagina.previous_page_number }}">«</a></li>{% endif %}
+  <li class="page-item disabled"><span class="page-link">{{ pagina.number }} / {{ pagina.paginator.num_pages }}</span></li>
+  {% if pagina.has_next %}<li class="page-item"><a class="page-link" href="?ver={{ ver }}&tipo={{ tipo }}&page={{ pagina.next_page_number }}">»</a></li>{% endif %}
+</ul></nav>
+{% endif %}
+{% endblock %}

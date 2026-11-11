@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Acceso denegado{% endblock %}
+{% block content %}
+<div class="text-center py-5">
+  <i class="bi bi-shield-x display-1 text-danger"></i>
+  <h1 class="h3 mt-3">Acceso denegado</h1>
+  <p class="text-muted">Su rol ({{ rol_usuario }}) no tiene permiso para realizar esta acción.</p>
+  <a href="{% url 'dashboard' %}" class="btn btn-bc">Volver al inicio</a>
+</div>
+{% endblock %}

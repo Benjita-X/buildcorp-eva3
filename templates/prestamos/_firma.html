@@ -1,0 +1,12 @@
+<div class="mb-3">
+  <label class="form-label fw-semibold">{{ titulo }} <span class="text-danger">*</span></label>
+  <div class="firma-wrap border rounded bg-white position-relative">
+    <canvas class="firma-canvas" data-firma-para="{{ campo.auto_id }}"></canvas>
+    <span class="firma-placeholder text-muted small">Firme aquí con el mouse o el dedo</span>
+  </div>
+  <div class="d-flex justify-content-between mt-1">
+    <span class="form-text">{{ ayuda }}</span>
+    <button type="button" class="btn btn-sm btn-outline-secondary" data-limpiar-firma="{{ campo.auto_id }}"><i class="bi bi-eraser"></i> Limpiar</button>
+  </div>
+  {{ campo }}
+</div>

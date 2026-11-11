@@ -1,0 +1,8 @@
+<div class="bc-kpis">
+  {% for nombre, valor, color in kpis %}
+  <div class="bc-kpi" style="border-left-color: {{ color }}">
+    <div class="bc-kpi-valor">{{ valor }}</div>
+    <div class="bc-kpi-nombre">{{ nombre }}</div>
+  </div>
+  {% endfor %}
+</div>

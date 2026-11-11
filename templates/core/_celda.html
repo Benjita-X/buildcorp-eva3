@@ -1,0 +1,1 @@
+{% if c.tipo == 'bool' %}{% if c.valor %}<i class="bi bi-check-circle-fill text-success"></i>{% else %}<i class="bi bi-x-circle text-muted"></i>{% endif %}{% elif c.tipo == 'badge' %}<span class="badge text-bg-{{ c.color }}">{{ c.valor }}</span>{% else %}{{ c.valor }}{% endif %}

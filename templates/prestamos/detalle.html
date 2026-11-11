@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load buildcorp %}
+{% block title %}Préstamo {{ p.folio }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb" class="d-print-none"><ol class="breadcrumb small">
+  <li class="breadcrumb-item"><a href="{% url 'crud_lista' 'prestamos' %}">Préstamos</a></li>
+  <li class="breadcrumb-item active">{{ p.folio }}</li>
+</ol></nav>
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+  <h1 class="h4 mb-0">Comprobante de préstamo {{ p.folio }}</h1>
+  <span class="badge text-bg-{{ p.estado.color }} fs-6">{{ p.estado }}</span>
+  {% if p.vencido %}<span class="badge text-bg-danger fs-6">{{ p.dias_atraso }} día(s) de atraso</span>{% endif %}
+  <div class="ms-auto d-flex gap-2 d-print-none">
+    <button onclick="window.print()" class="btn btn-outline-secondary"><i class="bi bi-printer"></i> Imprimir</button>
+    {% if p.abierto and perms.prestamos.change_prestamo %}
+      <a href="{% url 'prestamos:devolver' p.pk %}" class="btn btn-success"><i class="bi bi-box-arrow-in-down-left"></i> Registrar devolución</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100"><div class="card-body">
+      <h2 class="h6 text-muted text-uppercase">Contratista</h2>
+      <p class="mb-1 fw-semibold"><a href="{{ p.contratista.get_absolute_url }}">{{ p.contratista.razon_social }}</a></p>
+      <p class="small mb-2">RUT {{ p.contratista.rut }}{% if p.contratista.bloqueado %} · <span class="badge text-bg-dark">Bloqueado</span>{% endif %}</p>
+      <h2 class="h6 text-muted text-uppercase mt-3">Responsable de obra</h2>
+      <p class="mb-0">{{ p.responsable.nombre }} · RUT {{ p.responsable.rut }} · {{ p.responsable.cargo }}</p>
+    </div></div>
+  </div>
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100"><div class="card-body small">
+      <dl class="row mb-0">
+        <dt class="col-5 text-muted fw-normal">Obra</dt><dd class="col-7">{{ p.obra }}</dd>
+        <dt class="col-5 text-muted fw-normal">Entrega</dt><dd class="col-7">{{ p.fecha_entrega|date:"d-m-Y H:i" }} por {{ p.usuario_entrega }}</dd>
+        <dt class="col-5 text-muted fw-normal">Devolución comprometida</dt><dd class="col-7">{{ p.fecha_compromiso|date:"d-m-Y" }}</dd>
+        <dt class="col-5 text-muted fw-normal">Devolución real</dt><dd class="col-7">{% if p.fecha_devolucion %}{{ p.fecha_devolucion|date:"d-m-Y H:i" }} en {{ p.bodega_recepcion }} (recibió {{ p.usuario_recepcion }}){% else %}<span class="text-warning">Pendiente</span>{% endif %}</dd>
+        {% if p.observaciones %}<dt class="col-5 text-muted fw-normal">Observaciones</dt><dd class="col-7">{{ p.observaciones }}</dd>{% endif %}
+        {% if p.observaciones_devolucion %}<dt class="col-5 text-muted fw-normal">Obs. devolución</dt><dd class="col-7">{{ p.observaciones_devolucion }}</dd>{% endif %}
+      </dl>
+    </div></div>
+  </div>
+
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="table-responsive"><table class="table align-middle mb-0">
+        <thead class="table-light small"><tr><th>Código</th><th>Herramienta</th><th>Bodega origen</th><th class="text-end">Tarifa/día</th><th class="text-end">Horas</th><th>Condición</th><th class="text-end">Subtotal</th></tr></thead>
+        <tbody>
+        {% for d in detalles %}
+          <tr><td><a href="{{ d.activo.get_absolute_url }}">{{ d.activo.codigo }}</a></td><td>{{ d.activo.nombre }}</td><td class="small">{{ d.bodega_origen }}</td>
+            <td class="text-end">{{ d.tarifa_diaria|clp }}</td><td class="text-end">{% if d.devuelto %}{{ d.horas_uso }}{% else %}–{% endif %}</td>
+            <td>{% if d.condicion %}<span class="badge text-bg-{{ d.condicion.color }}">{{ d.condicion }}</span>{% else %}–{% endif %}</td>
+            <td class="text-end">{{ d.subtotal|clp }}</td></tr>
+        {% endfor %}
+        </tbody>
+        <tfoot class="small">
+          <tr><td colspan="6" class="text-end">Subtotal ({{ p.dias_cobro }} día(s) facturables)</td><td class="text-end">{{ p.subtotal|clp }}</td></tr>
+          <tr class="text-danger"><td colspan="6" class="text-end">Recargo por atraso ({{ p.dias_atraso }} día(s) × {{ p.recargo_pct }}% de la tarifa)</td><td class="text-end">{{ p.recargo|clp }}</td></tr>
+          <tr class="fs-5"><th colspan="6" class="text-end">Total {% if p.abierto %}a la fecha{% endif %}</th><th class="text-end">{{ p.total|clp }}</th></tr>
+        </tfoot>
+      </table></div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card shadow-sm"><div class="card-body text-center">
+      <img src="{{ p.firma_entrega }}" alt="Firma de entrega" class="firma-img">
+      <div class="border-top small pt-1">Firma recepción: {{ p.responsable.nombre }}</div>
+    </div></div>
+  </div>
+  <div class="col-md-6">
+    <div class="card shadow-sm"><div class="card-body text-center">
+      {% if p.firma_devolucion %}<img src="{{ p.firma_devolucion }}" alt="Firma de devolución" class="firma-img">
+      {% else %}<div class="firma-img d-flex align-items-center justify-content-center text-muted">Pendiente</div>{% endif %}
+      <div class="border-top small pt-1">Firma devolución{% if p.devuelto_por %}: {{ p.devuelto_por }}{% endif %}</div>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

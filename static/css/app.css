@@ -1,0 +1,38 @@
+:root { --bc: #1f2a37; --bc-acento: #f59f00; }
+body { background: #f4f6f8; }
+.bg-bc { background: var(--bc); }
+.text-bc { color: var(--bc-acento); }
+.btn-bc { background: var(--bc-acento); border-color: var(--bc-acento); color: #1f2a37; font-weight: 600; }
+.btn-bc:hover, .btn-bc:focus { background: #d98a00; border-color: #d98a00; color: #111; }
+.btn-outline-bc { border-color: var(--bc-acento); color: #b35c00; }
+.btn-outline-bc:hover { background: var(--bc-acento); color: #111; }
+a { color: #b35c00; }
+.login-bg { background: linear-gradient(135deg, #1f2a37 0%, #34495e 60%, #f59f00 160%); }
+
+@media (min-width: 992px) {
+  .sidebar { position: sticky; top: 56px; height: calc(100vh - 56px); overflow-y: auto; }
+}
+.sidebar .nav-link { color: #334; border-radius: 6px; padding: .35rem .6rem; font-size: .9rem; display: block; }
+.sidebar .nav-link:hover { background: #f1f3f5; }
+.sidebar .nav-link.active { background: #fff4d6; color: #7a3e00; font-weight: 600; }
+.sidebar .nav-link i { width: 1.3rem; display: inline-block; }
+.menu-grupo { font-size: .7rem; text-transform: uppercase; color: #8a94a0; margin: .9rem .6rem .25rem; letter-spacing: .5px; }
+
+.kpi .card-body { padding: .8rem 1rem; }
+.tile:hover { transform: translateY(-2px); transition: .15s; box-shadow: 0 .5rem 1rem rgba(0,0,0,.08) !important; }
+
+.firma-wrap { height: 170px; touch-action: none; }
+.firma-canvas { width: 100%; height: 100%; display: block; cursor: crosshair; }
+.firma-placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+.firma-wrap.firmado .firma-placeholder { display: none; }
+.firma-wrap.invalida { border-color: #dc3545 !important; box-shadow: 0 0 0 .2rem rgba(220,53,69,.25); }
+.firma-img { max-width: 100%; height: 120px; object-fit: contain; }
+
+.timeline li { border-left: 3px solid #e9ecef; padding-left: .9rem; position: relative; }
+.timeline li::before { content: ""; position: absolute; left: -7px; top: 4px; width: 11px; height: 11px; border-radius: 50%; background: var(--bc-acento); }
+
+@media print {
+  body { background: #fff; }
+  main { width: 100% !important; }
+  .card { box-shadow: none !important; border: 1px solid #ccc; }
+}

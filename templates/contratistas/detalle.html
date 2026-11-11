@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% load buildcorp %}
+{% block title %}{{ c.razon_social }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb"><ol class="breadcrumb small">
+  <li class="breadcrumb-item"><a href="{% url 'crud_lista' 'contratistas' %}">Contratistas</a></li>
+  <li class="breadcrumb-item active">{{ c.razon_social }}</li>
+</ol></nav>
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+  <div><h1 class="h4 mb-0">{{ c.razon_social }}</h1><span class="text-muted small">RUT {{ c.rut }} · {{ c.giro }}</span></div>
+  {% if c.bloqueado %}<span class="badge text-bg-dark fs-6"><i class="bi bi-slash-circle"></i> Bloqueado{% if c.bloqueo_automatico %} (automático){% endif %}</span>
+  {% else %}<span class="badge text-bg-success fs-6">Habilitado</span>{% endif %}
+  <div class="ms-auto d-flex gap-2">
+    {% if perms.contratistas.change_contratista %}
+      <a href="{% url 'crud_editar' 'contratistas' c.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> Editar</a>
+      {% if c.bloqueado %}
+        <form method="post" action="{% url 'contratistas:desbloquear' c.pk %}">{% csrf_token %}<button class="btn btn-sm btn-success"><i class="bi bi-unlock"></i> Desbloquear</button></form>
+      {% else %}
+        <button class="btn btn-sm btn-outline-dark" data-bs-toggle="modal" data-bs-target="#mBloq"><i class="bi bi-lock"></i> Bloquear</button>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>
+{% if c.bloqueado %}<div class="alert alert-dark"><b>Motivo:</b> {{ c.motivo_bloqueo }} · desde {{ c.fecha_bloqueo|date:"d-m-Y H:i" }}. No puede retirar herramientas mientras esté bloqueado.</div>{% endif %}
+
+<div class="row g-3 mb-3">
+  <div class="col-6 col-md-3"><div class="card kpi shadow-sm"><div class="card-body"><div class="small text-muted">Préstamos abiertos</div><div class="fs-4 fw-bold">{{ abiertos }}</div></div></div></div>
+  <div class="col-6 col-md-3"><div class="card kpi shadow-sm"><div class="card-body"><div class="small text-muted">Morosos</div><div class="fs-4 fw-bold text-danger">{{ morosos }}</div></div></div></div>
+  <div class="col-12 col-md-6"><div class="card kpi shadow-sm"><div class="card-body"><div class="small text-muted">Monto en curso (préstamos abiertos, a la fecha)</div><div class="fs-4 fw-bold">{{ deuda_abierta|clp }}</div></div></div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card shadow-sm"><div class="card-body small">
+      <p class="mb-1"><i class="bi bi-geo-alt"></i> {{ c.direccion }}, {{ c.comuna }}, {{ c.comuna.ciudad.region }}</p>
+      <p class="mb-1"><i class="bi bi-telephone"></i> {{ c.telefono|default:"—" }}</p>
+      <p class="mb-0"><i class="bi bi-envelope"></i> {{ c.email|default:"—" }}</p>
+    </div></div>
+    <div class="card shadow-sm mt-3">
+      <div class="card-header bg-white fw-semibold d-flex">Responsables de obra
+        {% if perms.contratistas.add_responsableobra %}<a class="ms-auto small" href="{% url 'crud_crear' 'responsables' %}?contratista={{ c.pk }}">+ Agregar</a>{% endif %}</div>
+      <ul class="list-group list-group-flush small">
+        {% for r in responsables %}<li class="list-group-item">{{ r.nombre }} <span class="text-muted">· {{ r.cargo }} · {{ r.rut }}</span>{% if not r.vigente %} <span class="badge text-bg-secondary">No vigente</span>{% endif %}</li>
+        {% empty %}<li class="list-group-item text-muted">Sin responsables registrados.</li>{% endfor %}
+      </ul>
+    </div>
+    {% if alertas %}
+    <div class="card shadow-sm mt-3 border-danger">
+      <div class="card-header bg-white fw-semibold text-danger">Alertas pendientes</div>
+      <ul class="list-group list-group-flush small">{% for a in alertas %}<li class="list-group-item"><span class="badge text-bg-{{ a.tipo.color }}">{{ a.tipo }}</span> {{ a.mensaje }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
+  </div>
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white fw-semibold">Historial de préstamos</div>
+      <div class="table-responsive"><table class="table table-sm align-middle mb-0">
+        <thead class="table-light small"><tr><th>Folio</th><th>Obra</th><th>Entrega</th><th>Comprometida</th><th>Estado</th><th class="text-end">Total</th></tr></thead>
+        <tbody>{% for p in prestamos %}
+          <tr><td><a href="{{ p.get_absolute_url }}">{{ p.folio }}</a></td><td>{{ p.obra.codigo }}</td><td>{{ p.fecha_entrega|date:"d-m-Y" }}</td>
+            <td>{{ p.fecha_compromiso|date:"d-m-Y" }}</td><td><span class="badge text-bg-{{ p.estado.color }}">{{ p.estado }}</span></td><td class="text-end">{{ p.total|clp }}</td></tr>
+        {% empty %}<tr><td colspan="6" class="text-muted text-center py-3">Sin préstamos.</td></tr>{% endfor %}</tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="mBloq" tabindex="-1"><div class="modal-dialog"><form class="modal-content" method="post" action="{% url 'contratistas:bloquear' c.pk %}">{% csrf_token %}
+  <div class="modal-header"><h5 class="modal-title">Bloquear contratista</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <div class="modal-body"><label class="form-label">Motivo</label><input name="motivo" class="form-control" required maxlength="200"></div>
+  <div class="modal-footer"><button class="btn btn-dark">Bloquear</button></div>
+</form></div></div>
+{% endblock %}

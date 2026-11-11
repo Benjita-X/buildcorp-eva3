@@ -1,0 +1,9 @@
+{% extends "admin/base.html" %}
+{% load static %}
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | BuildCorp Admin{% endblock %}
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static 'css/admin.css' %}">{% endblock %}
+{% block branding %}
+<div id="site-name"><a href="{% url 'admin:index' %}">🚧 BuildCorp <span class="bc-sub">Administración</span></a></div>
+{% endblock %}
+{% block userlinks %}<a href="{% url 'dashboard' %}">Ir al sistema</a> / {{ block.super }}{% endblock %}
+{% block nav-global %}{% endblock %}

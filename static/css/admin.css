@@ -1,0 +1,22 @@
+/* Personalización visual del Django Admin con la marca BuildCorp */
+:root, html[data-theme="light"] {
+  --primary: #f59f00;
+  --secondary: #1f2a37;
+  --accent: #ffd43b;
+  --header-bg: #1f2a37;
+  --header-link-color: #ffd43b;
+  --breadcrumbs-bg: #2b3a4a;
+  --link-fg: #b35c00;
+  --link-hover-color: #7a3e00;
+  --button-bg: #f59f00;
+  --button-hover-bg: #d98a00;
+  --default-button-bg: #1f2a37;
+  --default-button-hover-bg: #111820;
+  --selected-row: #fff4d6;
+}
+#site-name a { font-weight: 700; letter-spacing: .5px; }
+#site-name .bc-sub { font-weight: 400; opacity: .7; font-size: .8em; }
+.bc-kpis { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 20px; }
+.bc-kpi { flex: 1 1 160px; background: var(--body-bg); border: 1px solid var(--hairline-color); border-left: 5px solid; border-radius: 6px; padding: 12px 16px; }
+.bc-kpi-valor { font-size: 26px; font-weight: 700; color: var(--body-fg); }
+.bc-kpi-nombre { font-size: 12px; color: var(--body-quiet-color); text-transform: uppercase; }

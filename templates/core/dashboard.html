@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% load buildcorp %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+  <div>
+    <h1 class="h4 mb-0">Hola, {{ user.first_name|default:user.username }}</h1>
+    <span class="text-muted small">Estado del inventario y préstamos en tiempo real · actualiza cada 60 s</span>
+  </div>
+  {% if perms.prestamos.add_prestamo %}
+  <a href="{% url 'prestamos:nuevo' %}" class="btn btn-bc ms-auto"><i class="bi bi-pen"></i> Registrar entrega</a>
+  {% endif %}
+</div>
+
+<div class="row g-3 mb-3" id="kpis">
+  <div class="col-6 col-xl-3"><div class="card kpi shadow-sm border-start border-4 border-primary"><div class="card-body">
+    <div class="text-muted small">Préstamos abiertos</div><div class="fs-3 fw-bold" data-kpi="prestamos_abiertos">{{ prestamos_abiertos }}</div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="card kpi shadow-sm border-start border-4 border-danger"><div class="card-body">
+    <div class="text-muted small">Préstamos morosos</div><div class="fs-3 fw-bold text-danger" data-kpi="prestamos_atrasados">{{ prestamos_atrasados|length }}</div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="card kpi shadow-sm border-start border-4 border-dark"><div class="card-body">
+    <div class="text-muted small">Contratistas bloqueados</div><div class="fs-3 fw-bold" data-kpi="contratistas_bloqueados">{{ bloqueados|length }}</div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="card kpi shadow-sm border-start border-4 border-warning"><div class="card-body">
+    <div class="text-muted small">OTs de mantención abiertas</div><div class="fs-3 fw-bold" data-kpi="ots_abiertas">{{ ots_abiertas }}</div></div></div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-white fw-semibold"><i class="bi bi-tools"></i> Activos por estado <span class="text-muted fw-normal small">({{ total_activos }} · valor {{ valor_inventario|clp }})</span></div>
+      <div class="card-body">
+        {% for item in estados %}
+          <div class="d-flex justify-content-between small mb-1">
+            <a href="{% url 'crud_lista' 'activos' %}?estado={{ item.e.pk }}" class="text-reset"><span class="badge text-bg-{{ item.e.color }}">{{ item.e.nombre }}</span></a>
+            <span class="fw-semibold" data-kpi-estado="{{ item.e.codigo }}">{{ item.e.total }}</span>
+          </div>
+          <div class="progress mb-3" style="height:8px"><div class="progress-bar bg-{{ item.e.color }}" style="width: {{ item.pct }}%"></div></div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-white fw-semibold d-flex"><span><i class="bi bi-bell"></i> Alertas pendientes</span>
+        <a href="{% url 'alertas:lista' %}" class="ms-auto small">Ver todas ({{ alertas_total }})</a></div>
+      <ul class="list-group list-group-flush">
+        {% for a in alertas %}
+          <li class="list-group-item small"><span class="badge text-bg-{{ a.tipo.color }} me-1">{{ a.tipo.nombre }}</span>{{ a.mensaje }}</li>
+        {% empty %}
+          <li class="list-group-item text-muted small">Sin alertas pendientes. <i class="bi bi-emoji-smile"></i></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-white fw-semibold text-danger"><i class="bi bi-exclamation-octagon"></i> Devoluciones atrasadas</div>
+      <div class="table-responsive"><table class="table table-sm mb-0 align-middle">
+        <thead class="table-light small"><tr><th>Folio</th><th>Contratista</th><th>Comprometida</th><th class="text-end">Atraso</th></tr></thead>
+        <tbody>
+        {% for p in prestamos_atrasados %}
+          <tr><td><a href="{{ p.get_absolute_url }}">{{ p.folio }}</a></td><td>{{ p.contratista.razon_social }}</td>
+            <td>{{ p.fecha_compromiso|date:"d-m-Y" }}</td><td class="text-end"><span class="badge text-bg-danger">{{ p.dias_atraso }} d</span></td></tr>
+        {% empty %}<tr><td colspan="4" class="text-muted small text-center py-3">Sin atrasos.</td></tr>{% endfor %}
+        </tbody></table></div>
+      {% if por_vencer %}
+      <div class="card-footer bg-white small"><i class="bi bi-hourglass-split text-warning"></i> Por vencer (3 días):
+        {% for p in por_vencer %}<a href="{{ p.get_absolute_url }}">{{ p.folio }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-white fw-semibold"><i class="bi bi-calendar-check"></i> Mantenciones preventivas próximas / vencidas</div>
+      <ul class="list-group list-group-flush">
+        {% for plan in planes %}
+          <li class="list-group-item small">
+            <div class="d-flex"><a href="{{ plan.activo.get_absolute_url }}">{{ plan.activo.codigo }}</a>&nbsp;· {{ plan.descripcion }}
+              <span class="ms-auto badge {% if plan.esta_vencido %}text-bg-danger{% else %}text-bg-warning{% endif %}">{% if plan.esta_vencido %}Vencida{% else %}Próxima{% endif %}</span></div>
+            <div class="progress mt-1" style="height:6px"><div class="progress-bar {% if plan.esta_vencido %}bg-danger{% else %}bg-warning{% endif %}" style="width: {{ plan.porcentaje_uso }}%"></div></div>
+          </li>
+        {% empty %}<li class="list-group-item text-muted small">Todo al día.</li>{% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  {% if bloqueados %}
+  <div class="col-12">
+    <div class="card shadow-sm border-dark">
+      <div class="card-header bg-dark text-white fw-semibold"><i class="bi bi-slash-circle"></i> Contratistas bloqueados</div>
+      <ul class="list-group list-group-flush">
+        {% for c in bloqueados %}<li class="list-group-item small"><a href="{{ c.get_absolute_url }}">{{ c.razon_social }}</a> — {{ c.motivo_bloqueo }}</li>{% endfor %}
+      </ul>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}<script>BuildCorp.refrescarDashboard("/api/resumen/");</script>{% endblock %}

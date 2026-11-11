@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load buildcorp %}
+{% block title %}Nueva entrega{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3"><i class="bi bi-pen"></i> Registrar entrega de herramientas</h1>
+<form method="post" id="form-prestamo" data-requiere-firma novalidate>{% csrf_token %}
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white fw-semibold">1 · Contratista y obra</div>
+      <div class="card-body">
+        {% with f=form.contratista %}{% include "core/_campo.html" %}{% endwith %}
+        {% with f=form.responsable %}{% include "core/_campo.html" %}{% endwith %}
+        {% with f=form.obra %}{% include "core/_campo.html" %}{% endwith %}
+        {% with f=form.fecha_compromiso %}{% include "core/_campo.html" %}{% endwith %}
+        {% with f=form.observaciones %}{% include "core/_campo.html" %}{% endwith %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white fw-semibold d-flex flex-wrap gap-2 align-items-center">
+        2 · Herramientas disponibles
+        <input type="search" class="form-control form-control-sm ms-auto" style="max-width:220px" placeholder="Filtrar…" data-filtro-tabla="#tabla-activos">
+      </div>
+      {% for e in form.activos.errors %}<div class="alert alert-danger m-2 py-1 small">{{ e }}</div>{% endfor %}
+      <div class="table-responsive" style="max-height:360px">
+        <table class="table table-sm table-hover align-middle mb-0" id="tabla-activos">
+          <thead class="table-light small sticky-top"><tr><th></th><th>Código</th><th>Herramienta</th><th>Bodega</th><th class="text-end">Tarifa/día</th></tr></thead>
+          <tbody>
+          {% for a in form.fields.activos.queryset %}
+            <tr>
+              <td><input class="form-check-input chk-activo" type="checkbox" name="activos" value="{{ a.pk }}" id="act{{ a.pk }}" data-tarifa="{{ a.tarifa_diaria }}"
+                  {% if a.pk|stringformat:"s" in form.activos.value %}checked{% endif %}></td>
+              <td><label for="act{{ a.pk }}" class="fw-semibold">{{ a.codigo }}</label></td>
+              <td>{{ a.nombre }} <span class="text-muted small">{{ a.marca }} {{ a.modelo }}</span></td>
+              <td class="small">{{ a.bodega }}</td>
+              <td class="text-end">{{ a.tarifa_diaria|clp }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" class="text-center text-muted py-3">No hay herramientas disponibles.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="card-footer bg-white small d-flex flex-wrap gap-3">
+        <span>Seleccionadas: <b id="sel-cantidad">0</b></span>
+        <span>Tarifa diaria total: <b id="sel-tarifa">$ 0</b></span>
+        <span class="text-muted">Días estimados: <b id="sel-dias">–</b> · Cobro estimado: <b id="sel-estimado">$ 0</b></span>
+      </div>
+    </div>
+
+    <div class="card shadow-sm mt-3">
+      <div class="card-header bg-white fw-semibold">3 · Firma digital del responsable de obra</div>
+      <div class="card-body">
+        {% include "prestamos/_firma.html" with campo=form.firma titulo="Firma de recepción" ayuda="Al firmar, el responsable declara recibir las herramientas en buen estado." %}
+        <button class="btn btn-bc btn-lg w-100"><i class="bi bi-check2-circle"></i> Registrar entrega</button>
+      </div>
+    </div>
+  </div>
+</div>
+</form>
+{% endblock %}
+{% block scripts %}<script>BuildCorp.initPrestamo();</script>{% endblock %}

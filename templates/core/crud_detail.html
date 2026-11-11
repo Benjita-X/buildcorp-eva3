@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ obj }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb"><ol class="breadcrumb small">
+  <li class="breadcrumb-item"><a href="{% url 'crud_lista' m.slug %}">{{ m.titulo }}</a></li>
+  <li class="breadcrumb-item active">{{ obj }}</li>
+</ol></nav>
+<div class="row justify-content-center">
+  <div class="col-xl-8">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white d-flex flex-wrap align-items-center gap-2">
+        <h1 class="h5 mb-0"><i class="bi {{ m.icono }}"></i> {{ obj }}</h1>
+        {% if obj.es_sistema %}<span class="badge text-bg-secondary">Registro de sistema</span>{% endif %}
+        <div class="ms-auto d-flex gap-2">
+          {% if puede_editar %}<a href="{% url 'crud_editar' m.slug obj.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> Editar</a>{% endif %}
+          {% if puede_eliminar and not obj.es_sistema %}<a href="{% url 'crud_eliminar' m.slug obj.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Eliminar</a>{% endif %}
+        </div>
+      </div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          {% for c in campos %}
+            <dt class="col-sm-4 text-muted fw-normal">{{ c.etiqueta }}</dt>
+            <dd class="col-sm-8">{% include "core/_celda.html" %}</dd>
+          {% endfor %}
+        </dl>
+      </div>
+    </div>
+    <a href="{% url 'crud_lista' m.slug %}" class="btn btn-link mt-2"><i class="bi bi-arrow-left"></i> Volver al listado</a>
+  </div>
+</div>
+{% endblock %}

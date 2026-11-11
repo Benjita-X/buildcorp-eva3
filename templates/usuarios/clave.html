@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Cambiar contraseña{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white">
+        <h1 class="h5 mb-0"><i class="bi bi-key"></i>
+          {% if usuario %}Nueva contraseña para «{{ usuario.username }}»{% else %}Cambiar mi contraseña{% endif %}</h1>
+      </div>
+      <div class="card-body">
+        <form method="post" novalidate>{% csrf_token %}
+          {% for f in form %}{% include "core/_campo.html" %}{% endfor %}
+          <div class="d-flex gap-2">
+            <button class="btn btn-bc">Guardar</button>
+            <a href="{% if usuario %}{% url 'usuarios:lista' %}{% else %}{% url 'dashboard' %}{% endif %}" class="btn btn-link ms-auto">Cancelar</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

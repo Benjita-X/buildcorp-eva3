@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Eliminar {{ obj }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card border-danger shadow-sm">
+      <div class="card-body text-center p-4">
+        <i class="bi bi-exclamation-triangle display-4 text-danger"></i>
+        <h1 class="h5 mt-3">¿Eliminar {{ m.titulo_singular|lower }} «{{ obj }}»?</h1>
+        <p class="text-muted small">Esta acción no se puede deshacer. Si el registro está en uso, el sistema no permitirá eliminarlo; en ese caso márquelo como no vigente.</p>
+        <form method="post" class="d-flex justify-content-center gap-2">{% csrf_token %}
+          <a href="{% url 'crud_lista' m.slug %}" class="btn btn-outline-secondary">Cancelar</a>
+          <button class="btn btn-danger"><i class="bi bi-trash"></i> Sí, eliminar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

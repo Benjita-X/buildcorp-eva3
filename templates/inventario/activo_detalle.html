@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% load buildcorp %}
+{% block title %}{{ a.codigo }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb"><ol class="breadcrumb small">
+  <li class="breadcrumb-item"><a href="{% url 'crud_lista' 'activos' %}">Activos</a></li>
+  <li class="breadcrumb-item active">{{ a.codigo }}</li>
+</ol></nav>
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+  <div>
+    <h1 class="h4 mb-0">{{ a.codigo }} · {{ a.nombre }}</h1>
+    <span class="text-muted small">Hoja de vida del activo</span>
+  </div>
+  <span class="badge text-bg-{{ a.estado.color }} fs-6">{{ a.estado }}</span>
+  <div class="ms-auto d-flex flex-wrap gap-2">
+    {% if perms.inventario.change_activo %}
+      <a href="{% url 'crud_editar' 'activos' a.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> Editar</a>
+      {% if a.estado.codigo == 'DISPONIBLE' %}<button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#mTraslado"><i class="bi bi-truck"></i> Trasladar</button>{% endif %}
+      {% if a.estado.codigo != 'EN_USO' and a.estado.codigo != 'BAJA' %}<button class="btn btn-sm btn-outline-dark" data-bs-toggle="modal" data-bs-target="#mBaja"><i class="bi bi-archive"></i> Dar de baja</button>{% endif %}
+    {% endif %}
+    {% if perms.mantenimiento.add_mantenimiento %}
+      <a href="{% url 'crud_crear' 'mantenimientos' %}?activo={{ a.pk }}" class="btn btn-sm btn-outline-warning"><i class="bi bi-wrench"></i> Nueva OT</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card shadow-sm"><div class="card-body small">
+      <dl class="row mb-0">
+        <dt class="col-6 text-muted fw-normal">Categoría</dt><dd class="col-6">{{ a.categoria }}</dd>
+        <dt class="col-6 text-muted fw-normal">Marca / modelo</dt><dd class="col-6">{{ a.marca }} {{ a.modelo }}</dd>
+        <dt class="col-6 text-muted fw-normal">N° serie</dt><dd class="col-6">{{ a.numero_serie|default:"—" }}</dd>
+        <dt class="col-6 text-muted fw-normal">Bodega actual</dt><dd class="col-6">{{ a.bodega }}</dd>
+        <dt class="col-6 text-muted fw-normal">Horas de uso</dt><dd class="col-6 fw-semibold">{{ a.horas_uso }} h</dd>
+        <dt class="col-6 text-muted fw-normal">Tarifa diaria</dt><dd class="col-6">{{ a.tarifa_diaria|clp }}</dd>
+        <dt class="col-6 text-muted fw-normal">Valor compra</dt><dd class="col-6">{{ a.valor_compra|clp }}</dd>
+        <dt class="col-6 text-muted fw-normal">Adquisición</dt><dd class="col-6">{{ a.fecha_adquisicion|date:"d-m-Y"|default:"—" }}</dd>
+      </dl>
+      {% if a.observaciones %}<hr><p class="mb-0">{{ a.observaciones }}</p>{% endif %}
+    </div></div>
+
+    <div class="card shadow-sm mt-3">
+      <div class="card-header bg-white fw-semibold d-flex">Planes preventivos
+        {% if perms.mantenimiento.add_planmantenimiento %}<a class="ms-auto small" href="{% url 'crud_crear' 'planes' %}?activo={{ a.pk }}">+ Agregar</a>{% endif %}</div>
+      <ul class="list-group list-group-flush small">
+        {% for plan in planes %}
+        <li class="list-group-item">
+          <div class="d-flex"><span>{{ plan.descripcion }}</span>
+            {% if plan.esta_vencido %}<span class="badge text-bg-danger ms-auto">Vencido</span>{% elif plan.por_vencer %}<span class="badge text-bg-warning ms-auto">Próximo</span>{% endif %}</div>
+          <div class="text-muted">
+            {% if plan.cada_horas %}Cada {{ plan.cada_horas }} h (próx. a las {{ plan.proximas_horas }} h){% endif %}
+            {% if plan.cada_horas and plan.cada_dias %} · {% endif %}
+            {% if plan.cada_dias %}Cada {{ plan.cada_dias }} días (próx. {{ plan.proxima_fecha|date:"d-m-Y" }}){% endif %}
+          </div>
+          <div class="progress mt-1" style="height:6px"><div class="progress-bar {% if plan.esta_vencido %}bg-danger{% elif plan.por_vencer %}bg-warning{% else %}bg-success{% endif %}" style="width: {{ plan.porcentaje_uso }}%"></div></div>
+        </li>
+        {% empty %}<li class="list-group-item text-muted">Sin planes de mantenimiento.</li>{% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <ul class="nav nav-tabs" role="tablist">
+      <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-traza" type="button">Trazabilidad</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-prest" type="button">Préstamos</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-ot" type="button">Mantenciones</button></li>
+    </ul>
+    <div class="tab-content card shadow-sm border-top-0 rounded-top-0">
+      <div class="tab-pane fade show active" id="tab-traza">
+        <ul class="timeline list-unstyled p-3 mb-0">
+          {% for mv in movimientos %}
+          <li class="mb-3">
+            <div class="small text-muted">{{ mv.fecha|date:"d-m-Y H:i" }} · {{ mv.usuario|default:"sistema" }}</div>
+            <div>
+              {% if mv.estado_anterior %}<span class="badge text-bg-{{ mv.estado_anterior.color }}">{{ mv.estado_anterior }}</span> <i class="bi bi-arrow-right"></i>{% endif %}
+              <span class="badge text-bg-{{ mv.estado_nuevo.color }}">{{ mv.estado_nuevo }}</span>
+              {% if mv.bodega_origen != mv.bodega_destino and mv.bodega_origen %}<span class="small"> · {{ mv.bodega_origen }} → {{ mv.bodega_destino }}</span>{% endif %}
+            </div>
+            <div class="small">{{ mv.descripcion }}</div>
+          </li>
+          {% empty %}<li class="text-muted">Sin movimientos.</li>{% endfor %}
+        </ul>
+      </div>
+      <div class="tab-pane fade" id="tab-prest">
+        <div class="table-responsive"><table class="table table-sm mb-0">
+          <thead class="table-light small"><tr><th>Folio</th><th>Contratista</th><th>Entrega</th><th>Estado</th><th>Horas</th><th>Condición</th></tr></thead>
+          <tbody>{% for d in prestamos %}
+            <tr><td><a href="{{ d.prestamo.get_absolute_url }}">{{ d.prestamo.folio }}</a></td><td>{{ d.prestamo.contratista.razon_social }}</td>
+              <td>{{ d.prestamo.fecha_entrega|date:"d-m-Y" }}</td><td><span class="badge text-bg-{{ d.prestamo.estado.color }}">{{ d.prestamo.estado }}</span></td>
+              <td>{% if d.devuelto %}{{ d.horas_uso }}{% else %}–{% endif %}</td><td>{{ d.condicion|default:"–" }}</td></tr>
+          {% empty %}<tr><td colspan="6" class="text-muted text-center py-3">Nunca ha sido prestado.</td></tr>{% endfor %}</tbody>
+        </table></div>
+      </div>
+      <div class="tab-pane fade" id="tab-ot">
+        <div class="table-responsive"><table class="table table-sm mb-0">
+          <thead class="table-light small"><tr><th>OT</th><th>Tipo</th><th>Estado</th><th>Programada</th><th class="text-end">Costo</th></tr></thead>
+          <tbody>{% for ot in ots %}
+            <tr><td><a href="{{ ot.get_absolute_url }}">{{ ot.folio }}</a></td><td>{{ ot.tipo }}</td><td><span class="badge text-bg-{{ ot.estado.color }}">{{ ot.estado }}</span></td>
+              <td>{{ ot.fecha_programada|date:"d-m-Y" }}</td><td class="text-end">{{ ot.costo|clp }}</td></tr>
+          {% empty %}<tr><td colspan="5" class="text-muted text-center py-3">Sin órdenes de trabajo.</td></tr>{% endfor %}</tbody>
+        </table></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="mTraslado" tabindex="-1"><div class="modal-dialog"><form class="modal-content" method="post" action="{% url 'inventario:activo_trasladar' a.pk %}">{% csrf_token %}
+  <div class="modal-header"><h5 class="modal-title">Trasladar {{ a.codigo }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <div class="modal-body">{% for f in traslado_form %}{% include "core/_campo.html" %}{% endfor %}</div>
+  <div class="modal-footer"><button class="btn btn-bc">Trasladar</button></div>
+</form></div></div>
+<div class="modal fade" id="mBaja" tabindex="-1"><div class="modal-dialog"><form class="modal-content" method="post" action="{% url 'inventario:activo_baja' a.pk %}">{% csrf_token %}
+  <div class="modal-header"><h5 class="modal-title">Dar de baja {{ a.codigo }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <div class="modal-body"><p class="small text-muted">El activo quedará fuera de circulación. Su historial se conserva.</p>{% for f in baja_form %}{% include "core/_campo.html" %}{% endfor %}</div>
+  <div class="modal-footer"><button class="btn btn-dark">Confirmar baja</button></div>
+</form></div></div>
+{% endblock %}

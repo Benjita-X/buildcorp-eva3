@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load buildcorp %}
+{% block title %}{{ ot.folio }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb"><ol class="breadcrumb small">
+  <li class="breadcrumb-item"><a href="{% url 'crud_lista' 'mantenimientos' %}">Órdenes de trabajo</a></li>
+  <li class="breadcrumb-item active">{{ ot.folio }}</li>
+</ol></nav>
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+  <h1 class="h4 mb-0">{{ ot.folio }} · {{ ot.tipo }}</h1>
+  <span class="badge text-bg-{{ ot.estado.color }} fs-6">{{ ot.estado }}</span>
+  {% if perms.mantenimiento.change_mantenimiento and ot.abierta %}
+  <div class="ms-auto d-flex gap-2">
+    <a href="{% url 'crud_editar' 'mantenimientos' ot.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> Editar</a>
+    {% if ot.estado.codigo == 'PROGRAMADA' %}
+      <form method="post" action="{% url 'mantenimiento:iniciar' ot.pk %}">{% csrf_token %}<button class="btn btn-sm btn-warning"><i class="bi bi-play-fill"></i> Iniciar</button></form>
+    {% endif %}
+    <form method="post" action="{% url 'mantenimiento:cancelar' ot.pk %}" onsubmit="return confirm('¿Cancelar la OT?')">{% csrf_token %}<button class="btn btn-sm btn-outline-secondary">Cancelar OT</button></form>
+  </div>
+  {% endif %}
+</div>
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card shadow-sm"><div class="card-body small">
+      <dl class="row mb-0">
+        <dt class="col-5 text-muted fw-normal">Activo</dt><dd class="col-7"><a href="{{ ot.activo.get_absolute_url }}">{{ ot.activo }}</a> <span class="badge text-bg-{{ ot.activo.estado.color }}">{{ ot.activo.estado }}</span></dd>
+        <dt class="col-5 text-muted fw-normal">Plan</dt><dd class="col-7">{{ ot.plan|default:"—" }}</dd>
+        <dt class="col-5 text-muted fw-normal">Programada</dt><dd class="col-7">{{ ot.fecha_programada|date:"d-m-Y" }}</dd>
+        <dt class="col-5 text-muted fw-normal">Inicio</dt><dd class="col-7">{{ ot.fecha_inicio|date:"d-m-Y H:i"|default:"—" }}</dd>
+        <dt class="col-5 text-muted fw-normal">Término</dt><dd class="col-7">{{ ot.fecha_termino|date:"d-m-Y H:i"|default:"—" }}</dd>
+        <dt class="col-5 text-muted fw-normal">Horómetro al cierre</dt><dd class="col-7">{{ ot.horas_activo|default:"—" }}</dd>
+        <dt class="col-5 text-muted fw-normal">Técnico</dt><dd class="col-7">{{ ot.tecnico|default:"—" }}</dd>
+        <dt class="col-5 text-muted fw-normal">Costo</dt><dd class="col-7">{{ ot.costo|clp }}</dd>
+        <dt class="col-5 text-muted fw-normal">Creada por</dt><dd class="col-7">{{ ot.creado_por|default:"sistema" }} · {{ ot.creado|date:"d-m-Y H:i" }}</dd>
+      </dl>
+      <hr><p class="fw-semibold mb-1">Trabajo a realizar</p><p>{{ ot.descripcion|linebreaksbr }}</p>
+      {% if ot.trabajo_realizado %}<p class="fw-semibold mb-1">Trabajo realizado</p><p class="mb-0">{{ ot.trabajo_realizado|linebreaksbr }}</p>{% endif %}
+    </div></div>
+  </div>
+  {% if ot.estado.codigo == 'EN_PROCESO' and perms.mantenimiento.change_mantenimiento %}
+  <div class="col-lg-6">
+    <form class="card shadow-sm border-success" method="post" action="{% url 'mantenimiento:completar' ot.pk %}">{% csrf_token %}
+      <div class="card-header bg-white fw-semibold text-success">Cerrar orden de trabajo</div>
+      <div class="card-body">
+        <div class="mb-3"><label class="form-label">Trabajo realizado *</label><textarea name="trabajo_realizado" rows="3" class="form-control" required></textarea></div>
+        <div class="row">
+          <div class="col-md-6 mb-3"><label class="form-label">Técnico</label><input name="tecnico" class="form-control" value="{{ ot.tecnico }}"></div>
+          <div class="col-md-6 mb-3"><label class="form-label">Costo ($)</label><input name="costo" type="number" min="0" step="1" class="form-control" value="0"></div>
+        </div>
+        <button class="btn btn-success w-100"><i class="bi bi-check2-circle"></i> Completar mantención</button>
+        <div class="form-text">Se reinicia el contador del plan preventivo y el activo vuelve a "Disponible".</div>
+      </div>
+    </form>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
