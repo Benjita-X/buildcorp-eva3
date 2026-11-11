@@ -57,6 +57,16 @@ responsables por contratista y refresco del dashboard.
 **Apoyo recibido:** `core/tests.py` (20 pruebas), `deploy/setup_ec2.sh`, unidades systemd para Gunicorn y el timer de
 alertas, configuración de Nginx, `.env.example`.
 
+## Prompt 8 – Usuarios aparte y despliegue final (10-11-2026)
+**Consulta:** *"tiene que quedar listo, con todo lo de la rúbrica, fiel a lo que me tocó, separar por usuario, todo en templates,
+que haya Django Admin pero no dejarle todo junto"*, y desplegarlo en mi cuenta AWS.
+
+**Apoyo recibido:** app `usuarios` separada (login/logout, cambio de clave, gestión de usuarios con rol mediante vistas
+basadas en clases y templates propios; Django Admin solo para el administrador), 5 pruebas nuevas, ajuste del despliegue a
+la receta del curso (Gunicorn con socket unix en `/home/ubuntu/apps/`, Nginx con `location /static/` y logs, permisos
+`www-data`), creación de la instancia EC2 Ubuntu 22.04 t3.micro, Security Group (22 desde mi IP, 80, 443, ICMP) e IP elástica
+desde AWS CloudShell, y verificación del sitio en la IP pública.
+
 ---
 
 ### Validación realizada por el alumno
