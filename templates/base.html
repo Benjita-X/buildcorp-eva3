@@ -69,7 +69,7 @@
           {% if perms.auth.view_user %}
           <a class="nav-link {% if request.resolver_match.app_name == 'usuarios' %}active{% endif %}" href="{% url 'usuarios:lista' %}"><i class="bi bi-people"></i> Usuarios y roles</a>
           {% endif %}
-          <a class="nav-link" href="{% url 'mantenedores' %}"><i class="bi bi-grid-3x3-gap"></i> Todos los mantenedores</a>
+          <a class="nav-link" href="{% url 'mantenedores' %}"><i class="bi bi-sliders"></i> Parametrización</a>
         </div>
       </div>
     </aside>

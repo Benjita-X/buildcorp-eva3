@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Mantenedores{% endblock %}
 {% block content %}
-<h1 class="h4 mb-1"><i class="bi bi-grid-3x3-gap"></i> Mantenedores del sistema</h1>
+<h1 class="h4 mb-1"><i class="bi bi-sliders"></i> Parametrización y mantenedores</h1>
 <p class="text-muted small">Cada tabla tiene su propio administrador (listar, buscar, filtrar, crear, editar y eliminar) construido con templates.</p>
-{% for grupo, mantenedores in menu_grupos %}
+{% for grupo, mantenedores in todos_grupos %}
   <h2 class="h6 text-uppercase text-muted mt-4">{{ grupo }}</h2>
   <div class="row g-3">
     {% for mm in mantenedores %}
