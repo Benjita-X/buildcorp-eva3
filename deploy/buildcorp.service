@@ -10,7 +10,7 @@ WorkingDirectory=__APP_DIR__
 EnvironmentFile=__APP_DIR__/.env
 # Socket unix: rw para ubuntu y para el grupo www-data (Nginx), nada para el resto
 UMask=0007
-ExecStart=__APP_DIR__/venv/bin/gunicorn --workers 3 --bind unix:__SOCK__ --access-logfile - config.wsgi:application
+ExecStart=__APP_DIR__/venv/bin/gunicorn --workers 3 --umask 007 --bind unix:__SOCK__ --access-logfile - config.wsgi:application
 Restart=always
 RestartSec=3
 

@@ -3,8 +3,8 @@
 **Evaluación Parcial N°3 – Desarrollo Backend (INACAP) · Proyecto 4**
 Alumno: Benjamín Kreps Bravo
 
-> **Aplicación desplegada en AWS EC2:** http://IP_PUBLICA_EC2/  ← reemplazar por la IP pública real
-> **Django Admin:** http://IP_PUBLICA_EC2/admin/ · **API REST:** http://IP_PUBLICA_EC2/api/
+> **Aplicación desplegada en AWS EC2:** http://16.59.68.35/
+> **Django Admin:** http://16.59.68.35/admin/ · **API REST:** http://16.59.68.35/api/
 
 ---
 
