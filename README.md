@@ -167,6 +167,3 @@ Comandos útiles: `sudo systemctl status buildcorp nginx` · `sudo journalctl -u
 | `/api/` | API REST navegable (DRF) — un endpoint por tabla |
 | `/admin/` | Django Admin personalizado |
 
-## 8. Uso de IA
-
-Ver [`prompts_ia.md`](prompts_ia.md).
