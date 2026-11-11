@@ -19,7 +19,7 @@ no sabe dónde está cada activo ni cuándo mantenerlo. Este sistema centraliza:
 | **Entrega y devolución con firma digital del responsable de obra** | Flujo `/prestamos/nuevo/` y `/prestamos/<id>/devolver/` con firma dibujada en `<canvas>` (PNG base64), validada también en el servidor. Comprobante imprimible con ambas firmas. |
 | **Mantenimiento preventivo por uso o fechas límite** | `PlanMantenimiento` (cada N horas y/o cada N días). Las horas de uso informadas en cada devolución se suman al horómetro del activo. Al vencer un plan se genera la **OT automáticamente**; una devolución con daño genera una **OT correctiva**. |
 | **Alertas por morosidad y bloqueo automático de contratistas morosos** | Servicio `alertas/services.py`: préstamo vencido → estado *Atrasado* + alerta; si el contratista llega al máximo de préstamos morosos (parámetro) se **bloquea automáticamente** y no puede retirar más herramientas. Se desbloquea solo al regularizar. Se ejecuta cada hora (systemd timer) y al abrir el dashboard. |
-| Cobros exactos | Tarifa diaria congelada al momento del préstamo × días facturables + **recargo por atraso** (% parametrizable). |
+| Cobros exactos | Tarifa diaria congelada al momento del préstamo × días facturables (incluye los días de atraso). |
 
 ## 2. Todo parametrizado
 
@@ -29,7 +29,7 @@ ordenar, crear, editar, eliminar) y también está registrada en Django Admin.
 - **Territorio:** Región → Ciudad → Comuna (selects encadenados que consumen la API REST).
 - **Catálogos:** Categorías de activo, Marcas, Cargos.
 - **Estados y tipos:** Estados de activo, de préstamo, de mantenimiento, tipos de mantenimiento, tipos de alerta, condiciones de devolución.
-- **Reglas de negocio** (`ParametroSistema`): días de gracia, préstamos morosos para bloqueo, % de recargo, días/horas de aviso de mantención, aviso de vencimiento.
+- **Reglas de negocio** (`ParametroSistema`): días de gracia, préstamos morosos para bloqueo, **bloqueo automático Sí/No** (por defecto Sí; el bloqueo manual siempre está disponible), días/horas de aviso de mantención, aviso de vencimiento.
 
 Los registros que usa la lógica (ej. estado `DISPONIBLE`) se marcan como **de sistema**: se puede cambiar su nombre/color,
 pero no su código ni eliminarlos. Ningún registro en uso se puede borrar (FK `PROTECT`), se marca como *no vigente*.
@@ -95,7 +95,7 @@ python manage.py runserver
 ```
 
 Para una prueba rápida sin PostgreSQL se puede poner `DB_ENGINE=sqlite` en el `.env` (solo desarrollo).
-Pruebas automáticas: `python manage.py test` (20 pruebas de reglas de negocio, permisos y mantenedores).
+Pruebas automáticas: `python manage.py test` (pruebas de reglas de negocio, permisos, usuarios y mantenedores).
 
 ## 6. Despliegue en AWS EC2 (AWS Academy)
 
@@ -133,7 +133,7 @@ sudo systemctl list-timers | grep buildcorp
 
 | URL | Descripción |
 |---|---|
-| `/` | Dashboard (KPIs que se refrescan vía `/api/resumen/`) |
+| `/` | Dashboard (préstamos, morosos, bloqueados, mantenciones y alertas) |
 | `/prestamos/nuevo/` | Entrega con firma digital |
 | `/prestamos/<id>/` · `/prestamos/<id>/devolver/` | Comprobante y devolución |
 | `/inventario/activos/<id>/` | Hoja de vida del activo (trazabilidad, préstamos, OTs) |

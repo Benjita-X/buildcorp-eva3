@@ -5,9 +5,6 @@ Expone un endpoint CRUD por cada tabla y algunos endpoints de negocio.
 Seguridad: sesión o Basic Auth + permisos de modelo de Django (view/add/change/delete).
 """
 from rest_framework import serializers, viewsets
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 
 from alertas.models import Alerta
 from contratistas.models import Contratista, ResponsableObra
@@ -111,20 +108,3 @@ VIEWSETS = {
     "alertas": crear_viewset(Alerta, filtros=["resuelta", "tipo", "contratista"], solo_lectura=True),
 }
 
-
-@api_view(["GET"])
-@permission_classes([IsAuthenticated])
-def resumen(request):
-    """KPIs del dashboard (se refresca vía fetch cada 60 s)."""
-    from django.db.models import Count
-
-    estados = {e.codigo: e.total for e in pm.EstadoActivo.objects.annotate(total=Count("activos"))}
-    abiertos = Prestamo.objects.filter(fecha_devolucion__isnull=True)
-    return Response({
-        "activos_por_estado": estados,
-        "prestamos_abiertos": abiertos.count(),
-        "prestamos_atrasados": sum(1 for p in abiertos if p.vencido),
-        "contratistas_bloqueados": Contratista.objects.filter(bloqueado=True).count(),
-        "alertas_pendientes": Alerta.objects.filter(resuelta=False).count(),
-        "ots_abiertas": Mantenimiento.objects.filter(estado__codigo__in=["PROGRAMADA", "EN_PROCESO"]).count(),
-    })

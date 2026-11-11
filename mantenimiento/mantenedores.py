@@ -20,7 +20,7 @@ registrar(Mantenedor(
 registrar(Mantenedor(
     Mantenimiento, "mantenimientos", "Mantenimiento", "bi-gear-wide-connected", orden=2,
     titulo="Órdenes de trabajo",
-    columnas=["folio", "activo", "tipo", "estado", "fecha_programada", "tecnico", "costo"],
+    columnas=["folio", "activo", "tipo", "estado", "fecha_programada", "tecnico"],
     busqueda=["activo__codigo", "activo__nombre", "tecnico", "descripcion"], filtros=["estado", "tipo"],
     campos=["activo", "tipo", "fecha_programada", "tecnico", "descripcion"],
     queryset=lambda r: Mantenimiento.objects.select_related("activo", "tipo", "estado"),

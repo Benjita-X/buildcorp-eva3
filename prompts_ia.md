@@ -37,7 +37,7 @@ FK con `on_delete=PROTECT`.
 morosidad y bloqueo automático.
 
 **Apoyo recibido:** capa `services.py` con transacciones atómicas; firma con `<canvas>` → PNG base64; sobrescritura de
-`Activo.save()` para registrar `MovimientoActivo`; comando `revisar_alertas`; cálculo de cobro con recargo parametrizable.
+`Activo.save()` para registrar `MovimientoActivo`; comando `revisar_alertas`; cálculo de cobro (tarifa diaria × días).
 
 ## Prompt 5 – Frontend responsivo y consumo asíncrono de la API
 **Consulta:** estructura HTML/CSS con Bootstrap 5 y JS para selects encadenados Región/Ciudad/Comuna, filtro de
@@ -66,6 +66,14 @@ basadas en clases y templates propios; Django Admin solo para el administrador),
 la receta del curso (Gunicorn con socket unix en `/home/ubuntu/apps/`, Nginx con `location /static/` y logs, permisos
 `www-data`), creación de la instancia EC2 Ubuntu 22.04 t3.micro, Security Group (22 desde mi IP, 80, 443, ICMP) e IP elástica
 desde AWS CloudShell, y verificación del sitio en la IP pública.
+
+## Prompt 9 – Ajuste final al enunciado (11-11-2026)
+**Consulta:** comparar la aplicación con el texto literal del enunciado y quitar lo que no fuera necesario.
+
+**Apoyo recibido / decisiones propias:** se mantuvo todo lo respaldado por el texto (incluido el cobro, por los
+*"cobros inexactos a subcontratistas"*). Decidí conservar las alertas, el comprobante imprimible y el bloqueo manual, y
+agregar el parámetro *Bloqueo automático (Sí/No)*. Se quitaron el recargo porcentual por atraso, el costo de la OT y el
+refresco automático del dashboard.
 
 ---
 

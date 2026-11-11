@@ -5,7 +5,7 @@
 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
   <div>
     <h1 class="h4 mb-0">Hola, {{ user.first_name|default:user.username }}</h1>
-    <span class="text-muted small">Estado del inventario y préstamos en tiempo real · actualiza cada 60 s</span>
+    <span class="text-muted small">Estado del inventario, préstamos y mantenciones</span>
   </div>
   {% if perms.prestamos.add_prestamo %}
   <a href="{% url 'prestamos:nuevo' %}" class="btn btn-bc ms-auto"><i class="bi bi-pen"></i> Registrar entrega</a>
@@ -98,4 +98,3 @@
   {% endif %}
 </div>
 {% endblock %}
-{% block scripts %}<script>BuildCorp.refrescarDashboard("/api/resumen/");</script>{% endblock %}

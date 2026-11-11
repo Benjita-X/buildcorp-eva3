@@ -95,7 +95,6 @@ class Mantenimiento(models.Model):
     tecnico = models.CharField("técnico responsable", max_length=120, blank=True)
     descripcion = models.TextField("trabajo a realizar")
     trabajo_realizado = models.TextField("trabajo realizado", blank=True)
-    costo = models.DecimalField("costo ($)", max_digits=12, decimal_places=0, default=0)
     creado_por = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, editable=False
     )

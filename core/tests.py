@@ -104,7 +104,7 @@ class ReglasPrestamoTest(BaseTest):
         self.c2.refresh_from_db()
         self.assertFalse(self.c2.bloqueado, "El bloqueo automático debe levantarse al regularizar")
         p.refresh_from_db()
-        self.assertGreater(p.recargo, 0, "Devolución atrasada debe tener recargo")
+        self.assertGreater(p.dias_atraso, 0, "La devolución fue con atraso")
 
     def test_devolucion_danada_genera_ot_correctiva(self):
         activo = self.disponibles()[0]
@@ -118,11 +118,21 @@ class ReglasPrestamoTest(BaseTest):
         self.assertEqual(activo.estado.codigo, "MANTENCION")
         self.assertTrue(Mantenimiento.objects.filter(activo=activo, tipo__codigo="CORRECTIVO").exists())
 
-    def test_cobro_con_recargo_parametrizado(self):
+    def test_cobro_tarifa_por_dias(self):
         p = Prestamo.objects.get(contratista=self.c2, fecha_devolucion__isnull=True)
-        ParametroSistema.objects.filter(clave="RECARGO_ATRASO_PCT").update(valor="100")
-        self.assertEqual(p.recargo, p.tarifa_diaria_total * p.dias_atraso)
-        self.assertEqual(p.total, p.subtotal + p.recargo)
+        self.assertEqual(p.total, p.tarifa_diaria_total * p.dias_cobro)
+
+    def test_bloqueo_automatico_se_puede_desactivar(self):
+        from alertas.services import reevaluar_bloqueo
+        self.c2.desbloquear()
+        ParametroSistema.objects.filter(clave="BLOQUEO_AUTOMATICO").update(valor="0")
+        reevaluar_bloqueo(self.c2)
+        self.c2.refresh_from_db()
+        self.assertFalse(self.c2.bloqueado, "Con el parámetro en 0 el bloqueo es solo manual")
+        ParametroSistema.objects.filter(clave="BLOQUEO_AUTOMATICO").update(valor="1")
+        reevaluar_bloqueo(self.c2)
+        self.c2.refresh_from_db()
+        self.assertTrue(self.c2.bloqueado)
 
 
 class MantenimientoTest(BaseTest):
@@ -132,7 +142,7 @@ class MantenimientoTest(BaseTest):
         mant.iniciar(ot, self.admin)
         he004.refresh_from_db()
         self.assertEqual(he004.estado.codigo, "MANTENCION")
-        mant.completar(ot, "Cambio de carbones", 15000, "Técnico", self.admin)
+        mant.completar(ot, "Cambio de carbones", "Técnico", self.admin)
         he004.refresh_from_db()
         self.assertEqual(he004.estado.codigo, "DISPONIBLE")
         self.assertFalse(he004.mantencion_vencida())
@@ -210,7 +220,7 @@ class SeguridadYMantenedoresTest(BaseTest):
         urls = [reverse("dashboard"), reverse("mantenedores"), reverse("prestamos:nuevo"), reverse("alertas:lista"),
                 p.get_absolute_url(), reverse("prestamos:devolver", args=[Prestamo.objects.filter(fecha_devolucion__isnull=True).first().pk]),
                 Activo.objects.first().get_absolute_url(), self.c2.get_absolute_url(),
-                Mantenimiento.objects.first().get_absolute_url(), "/admin/", "/api/", "/api/resumen/",
+                Mantenimiento.objects.first().get_absolute_url(), "/admin/", "/api/",
                 "/api/comunas/?ciudad=1", "/admin/prestamos/prestamo/%d/change/" % p.pk]
         for url in urls:
             self.assertEqual(self.client.get(url).status_code, 200, url)

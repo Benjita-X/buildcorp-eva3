@@ -1,5 +1,3 @@
-from decimal import Decimal, InvalidOperation
-
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.core.exceptions import ValidationError
@@ -37,20 +35,13 @@ def iniciar(request, pk):
 @require_POST
 @permission_required("mantenimiento.change_mantenimiento", raise_exception=True)
 def completar(request, pk):
-    try:
-        costo = Decimal(request.POST.get("costo") or "0")
-        if costo < 0:
-            raise InvalidOperation
-    except InvalidOperation:
-        messages.error(request, "Costo inválido.")
-        return redirect("mantenimiento:detalle", pk)
     trabajo = request.POST.get("trabajo_realizado", "").strip()
     if not trabajo:
         messages.error(request, "Debe describir el trabajo realizado.")
         return redirect("mantenimiento:detalle", pk)
     return _accion(
         request, pk,
-        lambda ot: services.completar(ot, trabajo, costo, request.POST.get("tecnico", "").strip(), request.user),
+        lambda ot: services.completar(ot, trabajo, request.POST.get("tecnico", "").strip(), request.user),
         "{ot.folio} completada. El activo vuelve a estar disponible.",
     )
 

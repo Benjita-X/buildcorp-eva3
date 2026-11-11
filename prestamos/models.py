@@ -8,7 +8,7 @@ from django.utils import timezone
 
 from contratistas.models import Contratista, ResponsableObra
 from inventario.models import Activo, Bodega, Obra
-from parametros.models import CondicionActivo, EstadoPrestamo, ParametroSistema
+from parametros.models import CondicionActivo, EstadoPrestamo
 
 
 class Prestamo(models.Model):
@@ -83,16 +83,9 @@ class Prestamo(models.Model):
         return self.tarifa_diaria_total * self.dias_cobro
 
     @property
-    def recargo_pct(self):
-        return ParametroSistema.get(ParametroSistema.RECARGO_ATRASO, 50)
-
-    @property
-    def recargo(self):
-        return (self.tarifa_diaria_total * self.dias_atraso * self.recargo_pct / 100).quantize(Decimal("1"))
-
-    @property
     def total(self):
-        return self.subtotal + self.recargo
+        """Cobro exacto: tarifa diaria pactada x días facturables (incluye los días de atraso)."""
+        return self.subtotal
 
 
 class DetallePrestamo(models.Model):

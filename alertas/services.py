@@ -4,6 +4,8 @@ Reglas automáticas de alertas:
      -> el préstamo pasa a ATRASADO y se genera una alerta de MOROSIDAD.
   2. Bloqueo automático: si un contratista acumula >= MAX_PRESTAMOS_MOROSOS
      préstamos morosos, se bloquea (no puede pedir más herramientas).
+     Se puede desactivar con el parámetro BLOQUEO_AUTOMATICO = 0 (por defecto 1 = Sí);
+     el bloqueo manual siempre está disponible en la ficha del contratista.
   3. Desbloqueo automático: si el bloqueo fue automático y ya no tiene morosos.
   4. Préstamos por vencer y mantenciones vencidas / por vencer.
 
@@ -44,7 +46,8 @@ def prestamos_morosos():
 def reevaluar_bloqueo(contratista):
     maximo = max(1, ParametroSistema.get_int(ParametroSistema.MAX_MOROSOS, 1))
     morosos = prestamos_morosos().filter(contratista=contratista).count()
-    if morosos >= maximo and not contratista.bloqueado:
+    automatico = ParametroSistema.get_int(ParametroSistema.BLOQUEO_AUTO, 1) == 1  # 1 = Sí (por defecto)
+    if automatico and morosos >= maximo and not contratista.bloqueado:
         contratista.bloquear(
             f"Bloqueo automático: {morosos} préstamo(s) con devolución atrasada.", automatico=True
         )

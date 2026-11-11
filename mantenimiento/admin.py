@@ -24,7 +24,7 @@ class PlanAdmin(admin.ModelAdmin):
 
 @admin.register(Mantenimiento)
 class MantenimientoAdmin(admin.ModelAdmin):
-    list_display = ["folio", "activo", "tipo", "estado_badge", "fecha_programada", "tecnico", "costo"]
+    list_display = ["folio", "activo", "tipo", "estado_badge", "fecha_programada", "tecnico"]
     list_filter = ["estado", "tipo"]
     search_fields = ["activo__codigo", "activo__nombre", "tecnico", "descripcion"]
     autocomplete_fields = ["activo"]

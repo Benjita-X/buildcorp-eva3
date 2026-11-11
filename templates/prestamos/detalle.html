@@ -55,7 +55,6 @@
         </tbody>
         <tfoot class="small">
           <tr><td colspan="6" class="text-end">Subtotal ({{ p.dias_cobro }} día(s) facturables)</td><td class="text-end">{{ p.subtotal|clp }}</td></tr>
-          <tr class="text-danger"><td colspan="6" class="text-end">Recargo por atraso ({{ p.dias_atraso }} día(s) × {{ p.recargo_pct }}% de la tarifa)</td><td class="text-end">{{ p.recargo|clp }}</td></tr>
           <tr class="fs-5"><th colspan="6" class="text-end">Total {% if p.abierto %}a la fecha{% endif %}</th><th class="text-end">{{ p.total|clp }}</th></tr>
         </tfoot>
       </table></div>

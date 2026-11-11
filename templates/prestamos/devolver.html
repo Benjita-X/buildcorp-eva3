@@ -32,7 +32,6 @@
     <div class="card shadow-sm mt-3"><div class="card-body small">
       <div class="d-flex justify-content-between"><span>Días facturables a hoy</span><b>{{ p.dias_cobro }}</b></div>
       <div class="d-flex justify-content-between"><span>Subtotal ({{ p.tarifa_diaria_total|clp }} × {{ p.dias_cobro }} días)</span><b>{{ p.subtotal|clp }}</b></div>
-      <div class="d-flex justify-content-between text-danger"><span>Recargo por atraso ({{ p.dias_atraso }} día(s) × {{ p.recargo_pct }}%)</span><b>{{ p.recargo|clp }}</b></div>
       <hr class="my-2"><div class="d-flex justify-content-between fs-5"><span>Total estimado</span><b>{{ p.total|clp }}</b></div>
     </div></div>
   </div>

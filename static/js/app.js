@@ -202,24 +202,6 @@
       if (selC.value) cargarResponsables();
       recalcular();
     },
-
-    // Dashboard: refresco asíncrono de KPIs
-    refrescarDashboard: function (url) {
-      async function tick() {
-        try {
-          const r = await fetch(url, { credentials: "same-origin" });
-          if (!r.ok) return;
-          const d = await r.json();
-          document.querySelectorAll("[data-kpi]").forEach((el) => {
-            if (d[el.dataset.kpi] !== undefined) el.textContent = d[el.dataset.kpi];
-          });
-          document.querySelectorAll("[data-kpi-estado]").forEach((el) => {
-            el.textContent = d.activos_por_estado[el.dataset.kpiEstado] || 0;
-          });
-        } catch (e) { /* sin conexión: se mantiene el último valor */ }
-      }
-      setInterval(tick, 60000);
-    },
   };
 
   document.addEventListener("DOMContentLoaded", function () {

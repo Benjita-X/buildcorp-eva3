@@ -72,7 +72,7 @@ def iniciar(ot, usuario=None):
 
 
 @transaction.atomic
-def completar(ot, trabajo_realizado, costo, tecnico="", usuario=None):
+def completar(ot, trabajo_realizado, tecnico="", usuario=None):
     from alertas.services import resolver_alertas
 
     if ot.estado.codigo != EstadoMantenimiento.EN_PROCESO:
@@ -81,7 +81,6 @@ def completar(ot, trabajo_realizado, costo, tecnico="", usuario=None):
     ot.fecha_termino = timezone.now()
     ot.horas_activo = ot.activo.horas_uso
     ot.trabajo_realizado = trabajo_realizado
-    ot.costo = costo or 0
     if tecnico:
         ot.tecnico = tecnico
     ot.save()

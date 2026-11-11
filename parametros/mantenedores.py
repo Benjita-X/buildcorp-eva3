@@ -65,5 +65,5 @@ registrar(Mantenedor(
     m.ParametroSistema, "parametros-sistema", "Parametrización", "bi-sliders", orden=30,
     titulo="Reglas de negocio", columnas=["nombre", "clave", "valor", "es_sistema"],
     busqueda=["clave", "nombre"], campos=["clave", "nombre", "valor", "descripcion"],
-    ayuda="Valores que controlan las reglas automáticas: días de gracia, recargo por atraso, avisos, etc.",
+    ayuda="Valores que controlan las reglas automáticas: días de gracia, bloqueo automático (Sí/No), avisos, etc.",
 ))
