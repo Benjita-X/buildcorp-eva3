@@ -60,3 +60,15 @@ class PrestamoAdmin(admin.ModelAdmin):
     @admin.display(description="Firma de devolución")
     def firma_devolucion_img(self, obj):
         return self._firma(obj.firma_devolucion)
+
+
+@admin.register(DetallePrestamo)
+class DetallePrestamoAdmin(admin.ModelAdmin):
+    list_display = ["prestamo", "activo", "bodega_origen", "tarifa_diaria", "horas_uso", "condicion", "devuelto"]
+    list_filter = ["devuelto", "condicion", "bodega_origen"]
+    search_fields = ["activo__codigo", "activo__nombre", "prestamo__contratista__razon_social"]
+    list_select_related = ["prestamo__contratista", "activo", "bodega_origen", "condicion"]
+    readonly_fields = ["prestamo", "activo", "bodega_origen", "tarifa_diaria"]
+
+    def has_add_permission(self, request):
+        return False  # los detalles nacen en el flujo de entrega con firma
