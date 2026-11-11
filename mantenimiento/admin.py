@@ -1,3 +1,4 @@
+# Django Admin de planes preventivos y órdenes de trabajo
 from django.contrib import admin
 
 from core.admin_utils import badge, badge_estado
@@ -14,6 +15,7 @@ class PlanAdmin(admin.ModelAdmin):
     list_select_related = ["activo", "tipo"]
 
     @admin.display(description="Situación")
+    # Columna con etiqueta de color: Vencido / Por vencer / % usado
     def situacion(self, obj):
         if obj.esta_vencido:
             return badge("Vencido", "danger")

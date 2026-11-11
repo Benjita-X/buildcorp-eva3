@@ -1,3 +1,4 @@
+# URLs de las órdenes de trabajo (empiezan con /mantenimiento/)
 from django.urls import path
 
 from . import views

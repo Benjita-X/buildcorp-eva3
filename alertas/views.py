@@ -1,3 +1,4 @@
+# Vistas de alertas: lista (pendientes / resueltas), resolver y revisar
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.core.paginator import Paginator
@@ -11,6 +12,7 @@ from .services import ejecutar_revisiones
 
 
 @permission_required("alertas.view_alerta", raise_exception=True)
+# Lista de alertas, con filtro por estado (pendientes o resueltas) y por tipo
 def lista(request):
     ejecutar_revisiones()
     ver = request.GET.get("ver", "pendientes")
@@ -27,6 +29,7 @@ def lista(request):
 
 @require_POST
 @permission_required("alertas.change_alerta", raise_exception=True)
+# Botón "Resolver": pasa la alerta al historial
 def resolver(request, pk):
     alerta = get_object_or_404(Alerta, pk=pk)
     alerta.resolver(request.user)
@@ -36,6 +39,7 @@ def resolver(request, pk):
 
 @require_POST
 @permission_required("alertas.change_alerta", raise_exception=True)
+# Ejecuta la revisión de morosidad y mantenciones manualmente
 def revisar(request):
     r = ejecutar_revisiones()
     messages.info(

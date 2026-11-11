@@ -1,3 +1,4 @@
+{# Formulario genérico para crear y editar cualquier tabla (incluye el csrf_token de seguridad) #}
 {% extends "base.html" %}
 {% block title %}{% if obj %}Editar{% else %}Nuevo{% endif %} {{ m.titulo_singular|lower }}{% endblock %}
 {% block content %}

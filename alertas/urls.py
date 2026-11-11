@@ -1,3 +1,4 @@
+# URLs de la app alertas (empiezan con /alertas/)
 from django.urls import path
 
 from . import views

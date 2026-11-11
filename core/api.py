@@ -4,6 +4,10 @@ API REST (Django REST Framework).
 Expone un endpoint CRUD por cada tabla y algunos endpoints de negocio.
 Seguridad: sesión o Basic Auth + permisos de modelo de Django (view/add/change/delete).
 """
+# Conceptos de Django REST Framework (DRF):
+#   - Serializer: convierte un modelo (fila de la tabla) a JSON y viceversa.
+#   - ViewSet:    entrega el CRUD completo de la API (listar, ver, crear, editar, borrar).
+#   - Router:     crea las URLs de cada ViewSet (está en core/api_urls.py).
 from rest_framework import serializers, viewsets
 
 from alertas.models import Alerta
@@ -14,10 +18,16 @@ from parametros import models as pm
 from prestamos.models import DetallePrestamo, Prestamo
 
 
+# Crea un ViewSet para un modelo, así no se escribe uno a mano por cada tabla.
+#   filtros:      campos por los que se puede filtrar (?campo=valor)
+#   busqueda:     campos del buscador (?search=texto)
+#   solo_lectura: si es True la API solo deja leer (no crear ni editar)
 def crear_viewset(modelo, *, filtros=(), busqueda=(), solo_lectura=False, paginar=True, serializer=None, qs=None):
     if serializer is None:
+        # Serializer automático con todos los campos del modelo
         meta = type("Meta", (), {"model": modelo, "fields": "__all__"})
         serializer = type(f"{modelo.__name__}Serializer", (serializers.ModelSerializer,), {"Meta": meta})
+    # ModelViewSet = CRUD completo · ReadOnlyModelViewSet = solo listar y ver
     base = viewsets.ReadOnlyModelViewSet if solo_lectura else viewsets.ModelViewSet
     attrs = {
         "queryset": qs if qs is not None else modelo.objects.all(),
@@ -26,11 +36,12 @@ def crear_viewset(modelo, *, filtros=(), busqueda=(), solo_lectura=False, pagina
         "search_fields": list(busqueda),
     }
     if not paginar:
-        attrs["pagination_class"] = None
+        attrs["pagination_class"] = None  # sin páginas (para las listas cortas)
     return type(f"{modelo.__name__}ViewSet", (base,), attrs)
 
 
 # ---------------- Serializers con datos legibles ----------------
+# Activo: además de los ids, entrega los nombres del estado, la bodega y la categoría
 class ActivoSerializer(serializers.ModelSerializer):
     estado_nombre = serializers.CharField(source="estado.nombre", read_only=True)
     bodega_nombre = serializers.CharField(source="bodega.nombre", read_only=True)
@@ -42,6 +53,7 @@ class ActivoSerializer(serializers.ModelSerializer):
         read_only_fields = ["estado"]  # el estado solo cambia por los flujos de negocio
 
 
+# Cada herramienta dentro de un préstamo
 class DetallePrestamoSerializer(serializers.ModelSerializer):
     activo_codigo = serializers.CharField(source="activo.codigo", read_only=True)
     subtotal = serializers.DecimalField(max_digits=12, decimal_places=0, read_only=True)
@@ -51,6 +63,7 @@ class DetallePrestamoSerializer(serializers.ModelSerializer):
         exclude = ["prestamo"]
 
 
+# Préstamo con sus herramientas, días y total (las firmas no se envían por la API)
 class PrestamoSerializer(serializers.ModelSerializer):
     folio = serializers.CharField(read_only=True)
     contratista_nombre = serializers.CharField(source="contratista.razon_social", read_only=True)
@@ -65,6 +78,7 @@ class PrestamoSerializer(serializers.ModelSerializer):
         exclude = ["firma_entrega", "firma_devolucion"]
 
 
+# Comuna con el id de su región (lo usa el JavaScript de Región -> Ciudad -> Comuna)
 class ComunaSerializer(serializers.ModelSerializer):
     region = serializers.IntegerField(source="ciudad.region_id", read_only=True)
 
@@ -73,6 +87,8 @@ class ComunaSerializer(serializers.ModelSerializer):
         fields = ["id", "nombre", "ciudad", "region", "vigente"]
 
 
+# Lista de endpoints de la API: "nombre en la URL" -> ViewSet
+# Ejemplo: "activos" queda en /api/activos/
 VIEWSETS = {
     # Territorio (sin paginar: alimentan los selects encadenados Región -> Ciudad -> Comuna)
     "regiones": crear_viewset(pm.Region, filtros=["vigente"], busqueda=["nombre"], paginar=False),
@@ -96,6 +112,7 @@ VIEWSETS = {
     "activos": crear_viewset(Activo, filtros=["estado", "estado__codigo", "categoria", "bodega", "marca"],
                              busqueda=["codigo", "nombre", "numero_serie"], serializer=ActivoSerializer,
                              qs=Activo.objects.select_related("estado", "bodega", "categoria")),
+    # Solo lectura: los movimientos, préstamos, OTs y alertas se crean con las reglas del sistema
     "movimientos": crear_viewset(MovimientoActivo, filtros=["activo"], solo_lectura=True),
     "contratistas": crear_viewset(Contratista, filtros=["bloqueado", "vigente"], busqueda=["rut", "razon_social"]),
     "responsables": crear_viewset(ResponsableObra, filtros=["contratista", "vigente"], busqueda=["nombre", "rut"],
@@ -107,4 +124,3 @@ VIEWSETS = {
     "mantenimientos": crear_viewset(Mantenimiento, filtros=["activo", "estado", "tipo"], solo_lectura=True),
     "alertas": crear_viewset(Alerta, filtros=["resuelta", "tipo", "contratista"], solo_lectura=True),
 }
-

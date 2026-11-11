@@ -1,3 +1,4 @@
+# Pantallas de administración (mantenedores con templates) de la app préstamos
 from django.db.models import F
 from django.urls import reverse
 
@@ -6,6 +7,7 @@ from core.crud import Mantenedor, registrar
 from .models import DetallePrestamo, Prestamo
 
 
+# Botón verde "Devolver" en la fila de cada préstamo pendiente (si el usuario tiene permiso)
 def _acciones_prestamo(prestamo, usuario):
     """Botón 'Devolver' directo en la fila de los préstamos pendientes."""
     if prestamo.abierto and usuario.has_perm("prestamos.change_prestamo"):

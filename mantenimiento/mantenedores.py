@@ -1,9 +1,11 @@
+# Pantallas de administración (mantenedores con templates) de la app mantenimiento
 from core.crud import Mantenedor, registrar
 from parametros.models import EstadoMantenimiento, TipoMantenimiento
 
 from .models import Mantenimiento, PlanMantenimiento
 
 
+# Una OT nueva siempre parte en estado "Programada" y guarda quién la creó
 def _ot_antes_de_guardar(obj, request, creando):
     if creando:
         obj.estado = EstadoMantenimiento.por_codigo(EstadoMantenimiento.PROGRAMADA)

@@ -1,3 +1,7 @@
+# =============================================================================
+# Filtros y etiquetas propias para los templates.
+# Se usan en el HTML con {% load buildcorp %}, por ejemplo: {{ valor|clp }}
+# =============================================================================
 from decimal import Decimal
 
 from django import template
@@ -5,6 +9,7 @@ from django import template
 register = template.Library()
 
 
+# Filtro "clp": muestra un número como pesos chilenos
 @register.filter
 def clp(valor):
     """Formatea un número como pesos chilenos: 1234567 -> $ 1.234.567"""
@@ -14,11 +19,13 @@ def clp(valor):
         return valor
 
 
+# Filtro para leer un valor de un diccionario dentro del template
 @register.filter
 def get_item(diccionario, clave):
     return diccionario.get(clave)
 
 
+# Resumen con números (KPIs) que se muestra arriba en la portada del Django Admin
 @register.inclusion_tag("admin/_resumen.html")
 def admin_resumen():
     from alertas.models import Alerta

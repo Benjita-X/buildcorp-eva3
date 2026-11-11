@@ -1,3 +1,4 @@
+# Pruebas automáticas: se ejecutan con "python manage.py test"
 import io
 
 from django.contrib.auth.models import Group, User

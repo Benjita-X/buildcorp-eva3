@@ -1,3 +1,4 @@
+# Django Admin de contratistas y responsables de obra
 from django.contrib import admin, messages
 
 from core.admin_utils import badge
@@ -5,6 +6,7 @@ from core.admin_utils import badge
 from .models import Contratista, ResponsableObra
 
 
+# Muestra los responsables dentro de la página del contratista
 class ResponsableInline(admin.TabularInline):
     model = ResponsableObra
     extra = 0
@@ -17,6 +19,7 @@ class ContratistaAdmin(admin.ModelAdmin):
     list_filter = ["bloqueado", "bloqueo_automatico", "vigente", "comuna__ciudad__region"]
     search_fields = ["rut", "razon_social", "nombre_fantasia", "email"]
     autocomplete_fields = ["comuna"]
+    # Los datos del bloqueo solo se ven, no se editan a mano en el formulario
     readonly_fields = ["bloqueado", "bloqueo_automatico", "motivo_bloqueo", "fecha_bloqueo", "creado"]
     fieldsets = [
         ("Datos tributarios", {"fields": [("rut", "razon_social"), ("nombre_fantasia", "giro")]}),
@@ -24,8 +27,10 @@ class ContratistaAdmin(admin.ModelAdmin):
         ("Bloqueo por morosidad", {"fields": [("bloqueado", "bloqueo_automatico"), "motivo_bloqueo", "fecha_bloqueo"]}),
     ]
     inlines = [ResponsableInline]
+    # Acciones masivas: seleccionar varios contratistas y bloquearlos / desbloquearlos
     actions = ["accion_bloquear", "accion_desbloquear"]
 
+    # Columna con etiqueta de color: Bloqueado / Habilitado
     @admin.display(description="Estado", ordering="bloqueado")
     def estado_bloqueo(self, obj):
         if obj.bloqueado:

@@ -10,6 +10,7 @@ from .models import Mantenimiento, PlanMantenimiento
 ESTADOS_ABIERTOS = (EstadoMantenimiento.PROGRAMADA, EstadoMantenimiento.EN_PROCESO)
 
 
+# Busca si el activo ya tiene una OT abierta (para no crear duplicadas)
 def ot_abierta(activo, plan=None):
     qs = Mantenimiento.objects.filter(activo=activo, estado__codigo__in=ESTADOS_ABIERTOS)
     if plan is not None:
@@ -17,6 +18,7 @@ def ot_abierta(activo, plan=None):
     return qs.first()
 
 
+# Crea automáticamente la OT PREVENTIVA de un plan vencido
 def programar_desde_plan(plan, usuario=None):
     """Crea la OT preventiva de un plan vencido (si no tiene una abierta)."""
     if ot_abierta(plan.activo, plan):
@@ -29,6 +31,7 @@ def programar_desde_plan(plan, usuario=None):
     )
 
 
+# Crea una OT CORRECTIVA (cuando la herramienta se devuelve dañada)
 def crear_correctiva(activo, motivo, usuario=None):
     return Mantenimiento.objects.create(
         activo=activo, tipo=TipoMantenimiento.por_codigo(TipoMantenimiento.CORRECTIVO),
@@ -37,6 +40,7 @@ def crear_correctiva(activo, motivo, usuario=None):
     )
 
 
+# Revisa todos los planes y genera la OT de los que vencieron
 def revisar_mantenciones():
     """Genera OTs para planes vencidos y alertas para vencidos / por vencer."""
     from alertas.services import crear_alerta
@@ -58,6 +62,8 @@ def revisar_mantenciones():
     return resumen
 
 
+# INICIAR la OT: pasa a "En proceso" y el activo a "Mantenimiento".
+# Regla: no se puede iniciar si la herramienta está prestada.
 @transaction.atomic
 def iniciar(ot, usuario=None):
     if ot.estado.codigo != EstadoMantenimiento.PROGRAMADA:
@@ -71,6 +77,8 @@ def iniciar(ot, usuario=None):
         ot.activo.cambiar_estado(EstadoActivo.MANTENCION, usuario, f"Ingreso a mantención ({ot.folio})")
 
 
+# COMPLETAR la OT: guarda el trabajo realizado, reinicia el contador del plan
+# y el activo vuelve a "Disponible".
 @transaction.atomic
 def completar(ot, trabajo_realizado, tecnico="", usuario=None):
     from alertas.services import resolver_alertas
@@ -96,6 +104,7 @@ def completar(ot, trabajo_realizado, tecnico="", usuario=None):
         resolver_alertas(usuario, activo=ot.activo, tipo__codigo=TipoAlerta.MANTENCION)
 
 
+# CANCELAR la OT
 @transaction.atomic
 def cancelar(ot, usuario=None):
     if not ot.abierta:

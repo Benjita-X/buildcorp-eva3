@@ -1,3 +1,4 @@
+# Pruebas automáticas: se ejecutan con "python manage.py test"
 """
 Pruebas de las reglas de negocio y de seguridad.
     python manage.py test

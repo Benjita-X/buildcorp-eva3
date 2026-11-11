@@ -22,6 +22,7 @@ from parametros.models import EstadoPrestamo, ParametroSistema, TipoAlerta
 from .models import Alerta
 
 
+# Crea una alerta evitando duplicados
 def crear_alerta(codigo_tipo, mensaje, una_vez=False, **relaciones):
     """Crea la alerta si no existe una igual sin resolver (evita duplicados).
     Con una_vez=True tampoco la vuelve a crear si el usuario ya la resolvió
@@ -35,11 +36,13 @@ def crear_alerta(codigo_tipo, mensaje, una_vez=False, **relaciones):
     return Alerta.objects.create(tipo=tipo, mensaje=mensaje, **relaciones)
 
 
+# Marca como resueltas las alertas que cumplan el filtro
 def resolver_alertas(usuario=None, **filtros):
     for alerta in Alerta.objects.filter(resuelta=False, **filtros):
         alerta.resolver(usuario)
 
 
+# Préstamos sin devolver cuya fecha comprometida + días de gracia ya pasó
 def prestamos_morosos():
     from prestamos.models import Prestamo
 
@@ -48,6 +51,9 @@ def prestamos_morosos():
     return Prestamo.objects.filter(fecha_devolucion__isnull=True, fecha_compromiso__lt=limite)
 
 
+# BLOQUEO AUTOMÁTICO: si el contratista llega al máximo de préstamos morosos
+# y el parámetro BLOQUEO_AUTOMATICO está en 1, se bloquea. Si ya no tiene
+# morosos y el bloqueo fue automático, se desbloquea solo.
 def reevaluar_bloqueo(contratista):
     maximo = max(1, ParametroSistema.get_int(ParametroSistema.MAX_MOROSOS, 1))
     morosos = prestamos_morosos().filter(contratista=contratista).count()
@@ -69,6 +75,7 @@ def reevaluar_bloqueo(contratista):
     return None
 
 
+# Marca los préstamos morosos como "Atrasado", crea sus alertas y revisa bloqueos
 @transaction.atomic
 def revisar_morosidad():
     atrasado = EstadoPrestamo.por_codigo(EstadoPrestamo.ATRASADO)
@@ -96,6 +103,7 @@ def revisar_morosidad():
     return resumen
 
 
+# Alerta de préstamos que vencen pronto
 def revisar_por_vencer():
     from prestamos.models import Prestamo
 
@@ -114,6 +122,7 @@ def revisar_por_vencer():
     return n
 
 
+# Ejecuta todas las revisiones (se llama al abrir el dashboard o las alertas)
 def ejecutar_revisiones():
     from mantenimiento.services import revisar_mantenciones
 

@@ -1,3 +1,6 @@
+# ETAPA 5 de la receta: Gunicorn como servicio de systemd.
+# Se copia a /etc/systemd/system/buildcorp.service. systemd lo mantiene siempre encendido.
+# ExecStart: Gunicorn con 3 workers, escuchando en un socket unix (Nginx se conecta ahí).
 [Unit]
 Description=Gunicorn para BuildCorp
 After=network.target

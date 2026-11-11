@@ -1,8 +1,11 @@
+# =============================================================================
+# Vistas del inventario: hoja de vida del activo, traslado entre bodegas y baja.
+# =============================================================================
 from django import forms
 from django.contrib import messages
-from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.decorators import permission_required  # exige un permiso para entrar
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST          # solo acepta formularios enviados (POST)
 
 from core.crud import estilizar
 from parametros.models import EstadoActivo
@@ -10,6 +13,7 @@ from parametros.models import EstadoActivo
 from .models import Activo, Bodega
 
 
+# Formulario para trasladar una herramienta a otra bodega
 class TrasladoForm(forms.Form):
     bodega = forms.ModelChoiceField(Bodega.objects.filter(vigente=True), label="Bodega de destino")
     motivo = forms.CharField(max_length=200)
@@ -19,6 +23,7 @@ class TrasladoForm(forms.Form):
         estilizar(self)
 
 
+# Formulario para dar de baja una herramienta (pide el motivo)
 class BajaForm(forms.Form):
     motivo = forms.CharField(max_length=200, label="Motivo de la baja")
 
@@ -27,15 +32,18 @@ class BajaForm(forms.Form):
         estilizar(self)
 
 
+# HOJA DE VIDA: datos del activo, sus planes, préstamos, órdenes de trabajo y movimientos
 @permission_required("inventario.view_activo", raise_exception=True)
 def activo_detalle(request, pk):
     """Hoja de vida del activo: datos, planes de mantenimiento, préstamos, OTs y trazabilidad."""
     activo = get_object_or_404(Activo.objects.select_related("categoria", "marca", "estado", "bodega"), pk=pk)
     return render(request, "inventario/activo_detalle.html", {
         "a": activo,
+        # Últimos 50 movimientos (la trazabilidad)
         "movimientos": activo.movimientos.select_related(
             "estado_anterior", "estado_nuevo", "bodega_origen", "bodega_destino", "usuario"
         )[:50],
+        # Préstamos en los que ha estado esta herramienta
         "prestamos": activo.detalles_prestamo.select_related("prestamo__contratista", "prestamo__estado", "condicion")
         .order_by("-prestamo__fecha_entrega")[:20],
         "planes": activo.planes_mantenimiento.select_related("tipo"),
@@ -45,11 +53,13 @@ def activo_detalle(request, pk):
     })
 
 
+# TRASLADAR a otra bodega (el cambio queda registrado en la trazabilidad)
 @require_POST
 @permission_required("inventario.change_activo", raise_exception=True)
 def activo_trasladar(request, pk):
     activo = get_object_or_404(Activo, pk=pk)
     form = TrasladoForm(request.POST)
+    # Regla: solo se trasladan herramientas disponibles (no prestadas ni en mantención)
     if activo.estado.codigo != EstadoActivo.DISPONIBLE:
         messages.error(request, "Solo se pueden trasladar activos disponibles (no prestados ni en mantención).")
     elif form.is_valid():
@@ -58,19 +68,22 @@ def activo_trasladar(request, pk):
             messages.warning(request, "El activo ya está en esa bodega.")
         else:
             activo.bodega = destino
+            # Datos para el movimiento que se crea al guardar
             activo._usuario, activo._motivo = request.user, f"Traslado: {form.cleaned_data['motivo']}"
             activo.save()
             messages.success(request, f"{activo.codigo} trasladado a {destino}.")
     else:
         messages.error(request, "Datos de traslado inválidos.")
-    return redirect(activo)
+    return redirect(activo)  # vuelve a la hoja de vida
 
 
+# DAR DE BAJA (estado "Dado de Baja": la herramienta sale de circulación)
 @require_POST
 @permission_required("inventario.change_activo", raise_exception=True)
 def activo_baja(request, pk):
     activo = get_object_or_404(Activo, pk=pk)
     form = BajaForm(request.POST)
+    # Regla: no se puede dar de baja una herramienta que está prestada
     if activo.estado.codigo == EstadoActivo.EN_USO:
         messages.error(request, "No se puede dar de baja un activo prestado. Registre primero la devolución.")
     elif activo.estado.codigo == EstadoActivo.BAJA:

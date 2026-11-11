@@ -1,3 +1,4 @@
+# Django Admin de alertas (con acción masiva para marcarlas como resueltas)
 from django.contrib import admin
 
 from core.admin_utils import badge_estado

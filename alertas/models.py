@@ -1,3 +1,7 @@
+# =============================================================================
+# Modelo de alertas (REQUERIMIENTO 4: alertas por morosidad y bloqueo).
+# Cada alerta tiene un tipo y puede apuntar a un contratista, préstamo o activo.
+# =============================================================================
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
@@ -8,6 +12,7 @@ from parametros.models import TipoAlerta
 from prestamos.models import Prestamo
 
 
+# Tabla de alertas (las crea el sistema automáticamente)
 class Alerta(models.Model):
     tipo = models.ForeignKey(TipoAlerta, on_delete=models.PROTECT)
     mensaje = models.CharField(max_length=255)
@@ -27,6 +32,7 @@ class Alerta(models.Model):
     def __str__(self):
         return f"[{self.tipo}] {self.mensaje}"
 
+    # Marca la alerta como resuelta, con la fecha y quién la resolvió
     def resolver(self, usuario=None):
         self.resuelta = True
         self.fecha_resolucion = timezone.now()

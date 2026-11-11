@@ -1,3 +1,8 @@
+# =============================================================================
+# Vistas de préstamos: nueva entrega (con firma), comprobante y devolución.
+# Las reglas del negocio están en prestamos/services.py; aquí solo se recibe
+# el formulario, se llama al servicio y se muestra el resultado.
+# =============================================================================
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.core.exceptions import ValidationError
@@ -9,6 +14,7 @@ from .models import Prestamo
 
 
 @permission_required("prestamos.add_prestamo", raise_exception=True)
+# NUEVA ENTREGA (exige el permiso de agregar préstamos)
 def nuevo(request):
     form = PrestamoForm(request.POST or None, initial=request.GET.dict() or None)
     if request.method == "POST" and form.is_valid():
@@ -31,6 +37,7 @@ def nuevo(request):
 
 
 @permission_required("prestamos.view_prestamo", raise_exception=True)
+# COMPROBANTE del préstamo (datos, herramientas, cobro y firmas)
 def detalle(request, pk):
     prestamo = get_object_or_404(
         Prestamo.objects.select_related("contratista", "responsable", "obra", "estado", "usuario_entrega"), pk=pk
@@ -41,6 +48,7 @@ def detalle(request, pk):
 
 
 @permission_required("prestamos.change_prestamo", raise_exception=True)
+# DEVOLUCIÓN (exige el permiso de cambiar préstamos)
 def devolver(request, pk):
     prestamo = get_object_or_404(Prestamo, pk=pk)
     if not prestamo.abierto:

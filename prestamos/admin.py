@@ -1,3 +1,4 @@
+# Django Admin de préstamos (los préstamos se crean en el flujo con firma, no en el admin)
 from django.contrib import admin
 from django.utils.html import format_html
 
@@ -6,6 +7,7 @@ from core.admin_utils import badge, badge_estado
 from .models import DetallePrestamo, Prestamo
 
 
+# Muestra las herramientas dentro del préstamo (solo lectura)
 class DetalleInline(admin.TabularInline):
     model = DetallePrestamo
     extra = 0
@@ -18,6 +20,7 @@ class DetalleInline(admin.TabularInline):
 
 
 @admin.register(Prestamo)
+# Columnas, filtros, buscador y secciones del préstamo; las firmas se muestran como imagen
 class PrestamoAdmin(admin.ModelAdmin):
     list_display = ["folio", "contratista", "obra", "fecha_entrega", "fecha_compromiso", "estado_badge", "atraso", "total_fmt"]
     list_filter = ["estado", "obra", "contratista"]
@@ -50,6 +53,7 @@ class PrestamoAdmin(admin.ModelAdmin):
     def total_fmt(self, obj):
         return f"$ {obj.total:,.0f}".replace(",", ".")
 
+    # Convierte la firma (base64) en una imagen visible en el admin
     def _firma(self, data):
         return format_html('<img src="{}" style="max-height:120px;border:1px solid #ccc;background:#fff">', data) if data else "—"
 
@@ -63,6 +67,7 @@ class PrestamoAdmin(admin.ModelAdmin):
 
 
 @admin.register(DetallePrestamo)
+# Lista de todas las herramientas prestadas, con filtros
 class DetallePrestamoAdmin(admin.ModelAdmin):
     list_display = ["prestamo", "activo", "bodega_origen", "tarifa_diaria", "horas_uso", "condicion", "devuelto"]
     list_filter = ["devuelto", "condicion", "bodega_origen"]

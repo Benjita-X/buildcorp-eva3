@@ -1,3 +1,8 @@
+# =============================================================================
+# Modelos de mantenimiento (REQUERIMIENTO 3: preventivo por horas de uso o fechas)
+#   PlanMantenimiento -> cada cuánto se mantiene una máquina (horas y/o días)
+#   Mantenimiento     -> orden de trabajo (OT): preventiva o correctiva
+# =============================================================================
 from datetime import timedelta
 from decimal import Decimal
 
@@ -11,6 +16,7 @@ from inventario.models import Activo
 from parametros.models import EstadoMantenimiento, ParametroSistema, TipoMantenimiento
 
 
+# Tabla de planes: "a esta máquina hay que hacerle X cada N horas o cada N días"
 class PlanMantenimiento(models.Model):
     """Regla de mantenimiento preventivo: cada N horas de uso y/o cada N días."""
 
@@ -31,32 +37,39 @@ class PlanMantenimiento(models.Model):
     def __str__(self):
         return f"{self.activo.codigo} · {self.descripcion}"
 
+    # Validación: el plan necesita al menos una frecuencia (horas o días)
     def clean(self):
         if not self.cada_horas and not self.cada_dias:
             raise ValidationError("Debe indicar una frecuencia por horas de uso, por días, o ambas.")
 
+    # Fecha en que toca la próxima mantención (última fecha + cada_dias)
     @property
     def proxima_fecha(self):
         return self.ultima_fecha + timedelta(days=self.cada_dias) if self.cada_dias else None
 
+    # Horas de uso en que toca la próxima mantención (últimas horas + cada_horas)
     @property
     def proximas_horas(self):
         return self.ultimas_horas + self.cada_horas if self.cada_horas else None
 
+    # Cuántos días faltan
     @property
     def dias_restantes(self):
         return (self.proxima_fecha - timezone.localdate()).days if self.proxima_fecha else None
 
+    # Cuántas horas de uso faltan (según el horómetro del activo)
     @property
     def horas_restantes(self):
         return self.proximas_horas - self.activo.horas_uso if self.proximas_horas is not None else None
 
+    # True si ya llegó la fecha o las horas (lo que pase primero)
     @property
     def esta_vencido(self):
         return (self.dias_restantes is not None and self.dias_restantes <= 0) or (
             self.horas_restantes is not None and self.horas_restantes <= 0
         )
 
+    # True si está cerca de vencer (días/horas de aviso configurados en Reglas de negocio)
     @property
     def por_vencer(self):
         dias = ParametroSistema.get_int(ParametroSistema.DIAS_AVISO_MANT, 7)
@@ -66,6 +79,7 @@ class PlanMantenimiento(models.Model):
             or (self.horas_restantes is not None and self.horas_restantes <= horas)
         )
 
+    # Porcentaje consumido del plan (para la barra de progreso)
     @property
     def porcentaje_uso(self):
         """% consumido del intervalo (el mayor entre horas y días) para la barra de progreso."""
@@ -77,6 +91,7 @@ class PlanMantenimiento(models.Model):
         return int(min(100, max(valores))) if valores else 0
 
 
+# Tabla de órdenes de trabajo: Programada -> En proceso -> Completada (o Cancelada)
 class Mantenimiento(models.Model):
     """Orden de trabajo (OT) de mantenimiento preventivo o correctivo."""
 
@@ -111,10 +126,12 @@ class Mantenimiento(models.Model):
     def get_absolute_url(self):
         return reverse("mantenimiento:detalle", args=[self.pk])
 
+    # Número de la OT con formato, ej: OT-00001
     @property
     def folio(self):
         return f"OT-{self.pk:05d}" if self.pk else "OT-NUEVA"
 
+    # True si todavía no se completa ni se cancela
     @property
     def abierta(self):
         return self.estado.codigo in (EstadoMantenimiento.PROGRAMADA, EstadoMantenimiento.EN_PROCESO)

@@ -1,3 +1,6 @@
+# =============================================================================
+# Formularios de entrega y devolución de herramientas.
+# =============================================================================
 from datetime import timedelta
 from decimal import Decimal
 
@@ -10,6 +13,7 @@ from inventario.models import Activo, Bodega, Obra
 from parametros.models import CondicionActivo
 
 
+# Formulario de NUEVA ENTREGA. Solo muestra contratistas vigentes y NO bloqueados.
 class PrestamoForm(forms.Form):
     contratista = forms.ModelChoiceField(
         Contratista.objects.filter(vigente=True, bloqueado=False),
@@ -36,6 +40,7 @@ class PrestamoForm(forms.Form):
         estilizar(self)
 
 
+# Formulario de DEVOLUCIÓN: por cada herramienta pide horas de uso y condición.
 class DevolucionForm(forms.Form):
     bodega_recepcion = forms.ModelChoiceField(Bodega.objects.filter(vigente=True), label="Bodega que recibe")
     devuelto_por = forms.CharField(label="Nombre de quien devuelve", max_length=150)
@@ -59,9 +64,11 @@ class DevolucionForm(forms.Form):
         self.fields["devuelto_por"].initial = prestamo.responsable.nombre
         estilizar(self)
 
+    # Arma las filas de la tabla: (herramienta, campo horas, campo condición)
     def filas(self):
         return [(d, self[f"horas_{d.pk}"], self[f"condicion_{d.pk}"]) for d in self.detalles]
 
+    # Devuelve {id_detalle: (horas, condición)} para el servicio de devolución
     def devoluciones(self):
         return {
             d.pk: (self.cleaned_data[f"horas_{d.pk}"], self.cleaned_data[f"condicion_{d.pk}"]) for d in self.detalles

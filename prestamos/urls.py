@@ -1,3 +1,4 @@
+# URLs de la app préstamos (empiezan con /prestamos/)
 from django.urls import path
 
 from . import views

@@ -1,3 +1,4 @@
+# Configuración de la app "usuarios" (nombre que se muestra en el Django Admin)
 from django.apps import AppConfig
 
 
