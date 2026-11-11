@@ -22,11 +22,17 @@ from parametros.models import EstadoPrestamo, ParametroSistema, TipoAlerta
 from .models import Alerta
 
 
-def crear_alerta(codigo_tipo, mensaje, **relaciones):
-    """Crea la alerta solo si no existe una igual sin resolver (evita duplicados)."""
+def crear_alerta(codigo_tipo, mensaje, una_vez=False, **relaciones):
+    """Crea la alerta si no existe una igual sin resolver (evita duplicados).
+    Con una_vez=True tampoco la vuelve a crear si el usuario ya la resolvió
+    (se usa en las alertas de un préstamo: morosidad y por vencer)."""
     tipo = TipoAlerta.por_codigo(codigo_tipo)
-    alerta, creada = Alerta.objects.get_or_create(tipo=tipo, resuelta=False, **relaciones, defaults={"mensaje": mensaje})
-    return alerta if creada else None
+    existentes = Alerta.objects.filter(tipo=tipo, **relaciones)
+    if not una_vez:
+        existentes = existentes.filter(resuelta=False)
+    if existentes.exists():
+        return None
+    return Alerta.objects.create(tipo=tipo, mensaje=mensaje, **relaciones)
 
 
 def resolver_alertas(usuario=None, **filtros):
@@ -76,7 +82,7 @@ def revisar_morosidad():
         if crear_alerta(
             TipoAlerta.MOROSIDAD,
             f"Préstamo {p.folio} de {p.contratista.razon_social} atrasado {p.dias_atraso} día(s) (obra {p.obra.codigo}).",
-            prestamo=p, contratista=p.contratista,
+            prestamo=p, contratista=p.contratista, una_vez=True,
         ):
             resumen["alertas"] += 1
         contratistas.add(p.contratista_id)
@@ -102,7 +108,7 @@ def revisar_por_vencer():
         if crear_alerta(
             TipoAlerta.POR_VENCER,
             f"Préstamo {p.folio} de {p.contratista.razon_social} vence el {p.fecha_compromiso:%d-%m-%Y}.",
-            prestamo=p, contratista=p.contratista,
+            prestamo=p, contratista=p.contratista, una_vez=True,
         ):
             n += 1
     return n

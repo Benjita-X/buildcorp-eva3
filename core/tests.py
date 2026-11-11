@@ -157,6 +157,14 @@ class MantenimientoTest(BaseTest):
         )
         self.assertTrue(Mantenimiento.objects.filter(activo=ml001, estado__codigo="PROGRAMADA", plan__isnull=False).exists())
 
+    def test_alerta_resuelta_no_reaparece(self):
+        from alertas.models import Alerta
+        p = Prestamo.objects.get(contratista=self.c2, fecha_devolucion__isnull=True)
+        alerta = Alerta.objects.get(prestamo=p, tipo__codigo="MOROSIDAD", resuelta=False)
+        alerta.resolver(self.admin)
+        ejecutar_revisiones()
+        self.assertFalse(Alerta.objects.filter(prestamo=p, tipo__codigo="MOROSIDAD", resuelta=False).exists())
+
     def test_revision_idempotente(self):
         antes = Alerta.objects.count()
         ejecutar_revisiones()
