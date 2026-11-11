@@ -1,5 +1,5 @@
 from core.crud import Mantenedor, registrar
-from parametros.models import EstadoMantenimiento
+from parametros.models import EstadoMantenimiento, TipoMantenimiento
 
 from .models import Mantenimiento, PlanMantenimiento
 
@@ -10,11 +10,18 @@ def _ot_antes_de_guardar(obj, request, creando):
         obj.creado_por = request.user
 
 
+def _plan_antes_de_guardar(obj, request, creando):
+    # Un plan siempre es preventivo (el correctivo es solo para órdenes de trabajo por fallas)
+    obj.tipo = TipoMantenimiento.por_codigo(TipoMantenimiento.PREVENTIVO)
+
+
 registrar(Mantenedor(
     PlanMantenimiento, "planes", "Mantenimiento", "bi-calendar-check", orden=1,
     titulo="Planes preventivos",
-    columnas=["activo", "descripcion", "tipo", "cada_horas", "cada_dias", "ultima_fecha", "vigente"],
-    busqueda=["activo__codigo", "activo__nombre", "descripcion"], filtros=["tipo", "vigente"],
+    columnas=["activo", "descripcion", "cada_horas", "cada_dias", "ultima_fecha", "vigente"],
+    busqueda=["activo__codigo", "activo__nombre", "descripcion"], filtros=["vigente"],
+    campos=["activo", "descripcion", "cada_horas", "cada_dias", "ultima_fecha", "ultimas_horas", "vigente"],
+    antes_de_guardar=_plan_antes_de_guardar,
     ayuda="Defina cada cuántas horas de uso y/o días se debe mantener un activo. Al vencer se genera la OT automáticamente.",
 ))
 registrar(Mantenedor(
